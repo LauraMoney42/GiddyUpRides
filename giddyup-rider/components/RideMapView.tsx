@@ -17,9 +17,10 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, Platform } from 'react-native';
-import MapView, { Marker, Polyline, PROVIDER_GOOGLE, Region } from 'react-native-maps';
+import { View, Text, StyleSheet } from 'react-native';
 import { Colors, Radius } from '../constants/theme';
+// react-native-maps requires a native build — using mock map view for Expo Go prototype.
+// Swap this component for the full MapView implementation when running a dev build.
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -43,114 +44,57 @@ interface Props {
   onReady?: () => void;
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-/**
- * Calculate a region that fits both pickup and destination with padding.
- * For the prototype this is a simple bounding box — replace with
- * Google Directions API bounds once real keys land.
- */
-function regionForCoords(a: LatLng, b: LatLng, padding = 1.6): Region {
-  const midLat  = (a.latitude  + b.latitude)  / 2;
-  const midLng  = (a.longitude + b.longitude) / 2;
-  const deltaLat = Math.abs(a.latitude  - b.latitude)  * padding;
-  const deltaLng = Math.abs(a.longitude - b.longitude) * padding;
-  return {
-    latitude:       midLat,
-    longitude:      midLng,
-    latitudeDelta:  Math.max(deltaLat, 0.02),  // min zoom so we don't over-zoom on nearby points
-    longitudeDelta: Math.max(deltaLng, 0.02),
-  };
-}
-
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function RideMapView({
-  pickup,
-  destination,
   driverCoord,
-  showRoute = true,
   height = 260,
   onReady,
 }: Props) {
-  const region = regionForCoords(pickup, destination);
+  // Notify parent that mock map is "ready" immediately
+  React.useEffect(() => { onReady?.(); }, []);
 
   return (
-    <View style={[styles.container, { height }]}>
-      <MapView
-        style={styles.map}
-        provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
-        initialRegion={region}
-        region={driverCoord ? undefined : region}  // let map animate freely when driver is moving
-        showsUserLocation={false}       // we manage location ourselves
-        showsMyLocationButton={false}
-        showsCompass={false}
-        showsScale={false}
-        scrollEnabled={false}           // tap-only per accessibility spec — no scroll/pan
-        zoomEnabled={false}
-        rotateEnabled={false}
-        pitchEnabled={false}
-        onMapReady={onReady}
-        accessibilityLabel="Ride map showing your pickup location and destination"
-        accessibilityElementsHidden={false}
-      >
-        {/* Pickup marker */}
-        <Marker
-          coordinate={pickup}
-          title="Your pickup"
-          description="Where your driver will meet you"
-          pinColor={Colors.primary}
-          accessibilityLabel="Pickup location marker"
-        >
-          <View style={styles.pickupMarker}>
-            <Text style={styles.markerEmoji}>📍</Text>
-            <View style={[styles.markerLabel, { backgroundColor: Colors.primary }]}>
-              <Text style={styles.markerLabelText}>Pickup</Text>
-            </View>
-          </View>
-        </Marker>
+    <View
+      style={[styles.container, { height }]}
+      accessibilityLabel="Ride map showing your pickup location and destination"
+    >
+      {/* Mock map background */}
+      <View style={styles.mapBg}>
+        {/* Simulated road grid */}
+        <View style={styles.roadH} />
+        <View style={[styles.roadH, { top: '55%' }]} />
+        <View style={styles.roadV} />
+        <View style={[styles.roadV, { left: '60%' }]} />
 
-        {/* Destination marker */}
-        <Marker
-          coordinate={destination}
-          title="Your destination"
-          pinColor={Colors.sos}
-          accessibilityLabel="Destination marker"
-        >
-          <View style={styles.destMarker}>
-            <Text style={styles.markerEmoji}>🏁</Text>
-            <View style={[styles.markerLabel, { backgroundColor: Colors.sos }]}>
-              <Text style={styles.markerLabelText}>Drop-off</Text>
-            </View>
+        {/* Route line */}
+        <View style={styles.routeLine} />
+
+        {/* Pickup pin */}
+        <View style={[styles.pinContainer, { bottom: '25%', left: '20%' }]}>
+          <Text style={styles.pinEmoji}>📍</Text>
+          <View style={[styles.markerLabel, { backgroundColor: Colors.primary }]}>
+            <Text style={styles.markerLabelText}>Pickup</Text>
           </View>
-        </Marker>
+        </View>
+
+        {/* Destination pin */}
+        <View style={[styles.pinContainer, { top: '15%', right: '15%' }]}>
+          <Text style={styles.pinEmoji}>🏁</Text>
+          <View style={[styles.markerLabel, { backgroundColor: Colors.sos }]}>
+            <Text style={styles.markerLabelText}>Drop-off</Text>
+          </View>
+        </View>
 
         {/* Driver marker — shown during live ride */}
         {driverCoord && (
-          <Marker
-            coordinate={driverCoord}
-            title="Your driver"
-            anchor={{ x: 0.5, y: 0.5 }}
-            accessibilityLabel="Driver location marker"
-          >
-            <View style={styles.driverMarker}>
-              <Text style={styles.driverEmoji}>🚗</Text>
-            </View>
-          </Marker>
+          <View style={[styles.driverMarker, { top: '45%', left: '42%' }]}>
+            <Text style={styles.driverEmoji}>🚗</Text>
+          </View>
         )}
+      </View>
 
-        {/* Route polyline — straight line for mock; replace with Directions API path */}
-        {showRoute && (
-          <Polyline
-            coordinates={[pickup, destination]}
-            strokeColor={Colors.primary}
-            strokeWidth={3}
-            lineDashPattern={[8, 4]}
-          />
-        )}
-      </MapView>
-
-      {/* Prototype badge — remove once real API key is wired */}
+      {/* Prototype badge */}
       <View style={styles.mockBadge} pointerEvents="none">
         <Text style={styles.mockBadgeText}>📍 Mock map — real GPS coming soon</Text>
       </View>
@@ -167,18 +111,41 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#DDE2E8',
   },
-  map: {
+  mapBg: {
     ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#E8F0E8',
   },
-
-  // Markers
-  pickupMarker: {
+  roadH: {
+    position: 'absolute',
+    top: '35%',
+    left: 0,
+    right: 0,
+    height: 8,
+    backgroundColor: '#C8D4C8',
+  },
+  roadV: {
+    position: 'absolute',
+    left: '35%',
+    top: 0,
+    bottom: 0,
+    width: 8,
+    backgroundColor: '#C8D4C8',
+  },
+  routeLine: {
+    position: 'absolute',
+    bottom: '28%',
+    left: '22%',
+    width: '60%',
+    height: 3,
+    backgroundColor: Colors.primary,
+    opacity: 0.7,
+    transform: [{ rotate: '-25deg' }],
+  },
+  pinContainer: {
+    position: 'absolute',
     alignItems: 'center',
   },
-  destMarker: {
-    alignItems: 'center',
-  },
-  markerEmoji: {
+  pinEmoji: {
     fontSize: 28,
   },
   markerLabel: {
@@ -193,6 +160,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   driverMarker: {
+    position: 'absolute',
     backgroundColor: '#fff',
     borderRadius: 20,
     padding: 4,
@@ -202,8 +170,6 @@ const styles = StyleSheet.create({
   driverEmoji: {
     fontSize: 22,
   },
-
-  // Mock badge
   mockBadge: {
     position: 'absolute',
     bottom: 8,
