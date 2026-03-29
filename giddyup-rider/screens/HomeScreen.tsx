@@ -61,11 +61,15 @@ const MOCK_RECENT_RIDES: RecentRide[] = [
 interface HomeScreenProps {
   userName?: string;
   onBookRide?: () => void;
+  onSettings?: () => void;
+  onViewHistory?: () => void;
 }
 
 export default function HomeScreen({
   userName = 'there',
   onBookRide,
+  onSettings,
+  onViewHistory,
 }: HomeScreenProps) {
   const greeting = getGreeting();
 
@@ -78,9 +82,10 @@ export default function HomeScreen({
             <Text style={styles.greeting}>{greeting},</Text>
             <Text style={styles.userName}>{userName} 👋</Text>
           </View>
-          {/* Settings icon — navigates to accessibility settings */}
+          {/* Settings icon — navigates to accessibility settings (gu-011) */}
           <TouchableOpacity
             style={styles.settingsButton}
+            onPress={() => { Vibration.vibrate(50); onSettings?.(); }}
             accessibilityLabel="Settings"
             accessibilityHint="Open app settings and accessibility options"
             accessibilityRole="button"
@@ -125,6 +130,16 @@ export default function HomeScreen({
           {/* ── Recent Rides ───────────────────────────────────────────── */}
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Recent Rides</Text>
+            {onViewHistory && (
+              <TouchableOpacity
+                onPress={() => { Vibration.vibrate(30); onViewHistory(); }}
+                accessibilityLabel="View all ride history"
+                accessibilityRole="button"
+                style={styles.viewAllButton}
+              >
+                <Text style={styles.viewAllText}>View All →</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           {MOCK_RECENT_RIDES.length > 0 ? (
@@ -355,6 +370,9 @@ const styles = StyleSheet.create({
 
   // Section headers
   sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: Spacing.sm,
     marginTop: Spacing.xs,
   },
@@ -362,6 +380,16 @@ const styles = StyleSheet.create({
     fontSize: FontSize.lg,
     color: Colors.textPrimary,
     fontWeight: '800',
+  },
+  viewAllButton: {
+    minHeight: TouchTarget.min,
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.xs,
+  },
+  viewAllText: {
+    fontSize: FontSize.sm,
+    color: Colors.primary,
+    fontWeight: '700',
   },
 
   // Quick actions
