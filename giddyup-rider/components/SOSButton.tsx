@@ -33,13 +33,17 @@ export default function SOSButton({ onSOS }: SOSButtonProps) {
   const handleConfirm = () => {
     setConfirmVisible(false);
     Vibration.vibrate([0, 200, 100, 200]);
-    // TODO (gu-008): wire up real SOS alert → Firestore alerts collection
-    Alert.alert(
-      '🚨 Help is on the way',
-      'We have notified emergency services and your caregiver. Stay where you are.',
-      [{ text: 'OK', style: 'default' }]
-    );
-    onSOS?.();
+    if (onSOS) {
+      // gu-014: navigate to full SOSScreen flow (countdown → alerting → alerted)
+      onSOS();
+    } else {
+      // Fallback if no navigator provided (standalone usage)
+      Alert.alert(
+        '🚨 Help is on the way',
+        'We have notified emergency services and your caregiver. Stay where you are.',
+        [{ text: 'OK', style: 'default' }]
+      );
+    }
   };
 
   const handleCancel = () => {

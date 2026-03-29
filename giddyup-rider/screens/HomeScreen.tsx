@@ -63,6 +63,7 @@ interface HomeScreenProps {
   onBookRide?: () => void;
   onSettings?: () => void;
   onViewHistory?: () => void;
+  onSOS?: () => void;
 }
 
 export default function HomeScreen({
@@ -70,6 +71,7 @@ export default function HomeScreen({
   onBookRide,
   onSettings,
   onViewHistory,
+  onSOS,
 }: HomeScreenProps) {
   const greeting = getGreeting();
 
@@ -160,8 +162,8 @@ export default function HomeScreen({
           <View style={{ height: 120 }} />
         </ScrollView>
 
-        {/* Always-visible SOS button */}
-        <SOSButton />
+        {/* Always-visible SOS button — gu-014: onSOS navigates to full SOSScreen */}
+        <SOSButton onSOS={onSOS} />
       </View>
     </SafeAreaView>
   );

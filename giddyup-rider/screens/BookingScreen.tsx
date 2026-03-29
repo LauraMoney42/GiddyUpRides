@@ -97,9 +97,10 @@ const PRESET_DESTINATIONS = [
 interface BookingScreenProps {
   onBack: () => void;
   onRideConfirmed?: (driver: MockDriver, destination: string) => void;
+  onSOS?: () => void;
 }
 
-export default function BookingScreen({ onBack, onRideConfirmed }: BookingScreenProps) {
+export default function BookingScreen({ onBack, onRideConfirmed, onSOS }: BookingScreenProps) {
   const [step, setStep]               = useState<BookingStep>('destination');
   const [destination, setDestination] = useState('');
   const [selectedDriver, setDriver]   = useState<MockDriver | null>(null);
@@ -204,8 +205,8 @@ export default function BookingScreen({ onBack, onRideConfirmed }: BookingScreen
           />
         )}
 
-        {/* Always-visible SOS */}
-        <SOSButton />
+        {/* Always-visible SOS — gu-014: wired to SOSScreen */}
+        <SOSButton onSOS={onSOS} />
       </View>
     </SafeAreaView>
   );
