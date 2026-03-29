@@ -1,0 +1,7 @@
+# Never commit secrets or deps
+**/.env
+**/*.env.local
+**/node_modules/
+**/.expo/
+**/dist/
+.DS_Store
