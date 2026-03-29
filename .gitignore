@@ -1,7 +1,51 @@
-# Never commit secrets or deps
+# ── Secrets & environment variables ─────────────────────────────────────────
+# NEVER commit real API keys, tokens, or credentials
 **/.env
-**/*.env.local
+**/.env.local
+**/.env.production
+**/.env.staging
+**/.env.development
+**/.env.*
+**/google-services.json
+**/GoogleService-Info.plist
+**/serviceAccountKey.json
+**/firebase-adminsdk*.json
+
+# ── Dependencies ──────────────────────────────────────────────────────────────
 **/node_modules/
+
+# ── Expo / React Native build artifacts ──────────────────────────────────────
 **/.expo/
 **/dist/
+**/web-build/
+
+# ── iOS build artifacts ───────────────────────────────────────────────────────
+**/ios/build/
+**/ios/Pods/
+**/*.ipa
+**/*.xcarchive
+**/*.xcworkspace/xcuserdata/
+
+# ── Android build artifacts ───────────────────────────────────────────────────
+**/android/build/
+**/android/app/build/
+**/android/.gradle/
+**/*.apk
+**/*.aab
+**/*.keystore
+
+# ── macOS ─────────────────────────────────────────────────────────────────────
 .DS_Store
+**/.DS_Store
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+**/*.log
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+
+# ── Editor / IDE ──────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo

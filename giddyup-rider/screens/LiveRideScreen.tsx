@@ -1,5 +1,6 @@
 // GiddyUp Rides — LiveRideScreen.tsx
 // gu-007: Live ride in-progress screen (mock data).
+// gu-033: Fires ride-status local notifications on phase transitions.
 //
 // Shows:
 //   - Driver card: name, vehicle, plate, rating, photo placeholder
@@ -30,14 +31,21 @@ import {
 } from 'react-native';
 import { Colors, FontSize, Radius, Spacing, TouchTarget } from '../constants/theme';
 import SOSButton from '../components/SOSButton';
+import { useAccessibility } from '../context/AccessibilityContext';
 // gu-012: Google Maps integration
-import RideMapView, { LatLng } from '../components/RideMapView';
+import RideMapView, { LatLng, extractVehicleColor } from '../components/RideMapView';
 import {
   MOCK_HOME,
   MOCK_DEFAULT_DESTINATION,
   mockDriverApproachPath,
   mockDriverTripPath,
 } from '../constants/mockCoords';
+// gu-033: ride-status push notifications
+import {
+  sendTenMinWarning,
+  sendDriverArriving,
+  sendRideStarted,
+} from '../services/NotificationService';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -90,6 +98,9 @@ export default function LiveRideScreen({
   onCancelRide,
   onSOS,
 }: LiveRideScreenProps) {
+  const { fontScale } = useAccessibility();
+  const sf = (base: number) => Math.round(base * fontScale);
+
   const [phase, setPhase] = useState<RidePhase>('driver_coming');
   const [etaSeconds, setEtaSeconds] = useState(480); // 8-min mock ETA
   const phaseRef = useRef<RidePhase>('driver_coming');
@@ -118,6 +129,33 @@ export default function LiveRideScreen({
       return () => clearInterval(timer);
     }
   }, [phase]);
+
+  // gu-033: Fire ride-status notifications on phase transitions ───────────────
+  // driver_coming  → 10-min warning fires immediately on mount (mock: ETA starts
+  //                  at 8 min, simulating real dispatch where ETA was >10 min at
+  //                  the moment of booking confirmation)
+  // driver_arrived → "Your driver is arriving now"
+  // in_progress    → "Your ride has started"
+  const notifiedRef = useRef<Set<RidePhase>>(new Set());
+  useEffect(() => {
+    if (notifiedRef.current.has(phase)) return; // don't double-fire
+    notifiedRef.current.add(phase);
+
+    switch (phase) {
+      case 'driver_coming':
+        // Simulate the 10-min ETA alert that would fire from the server
+        sendTenMinWarning(driverName);
+        break;
+      case 'driver_arrived':
+        sendDriverArriving(driverName);
+        break;
+      case 'in_progress':
+        sendRideStarted(destination);
+        break;
+      default:
+        break;
+    }
+  }, [phase, driverName, destination]);
 
   // gu-012: Animate driver marker along approach path during driver_coming phase
   useEffect(() => {
@@ -212,21 +250,21 @@ export default function LiveRideScreen({
         <View style={[styles.statusBanner, { backgroundColor: statusConfig.bannerColor }]}>
           <Text style={styles.statusEmoji}>{statusConfig.emoji}</Text>
           <Text
-            style={styles.statusTitle}
+            style={[styles.statusTitle, { fontSize: sf(FontSize.xl) }]}
             accessibilityRole="header"
             accessibilityLabel={statusConfig.title}
           >
             {statusConfig.title}
           </Text>
-          <Text style={styles.statusSub}>{statusConfig.subtitle}</Text>
+          <Text style={[styles.statusSub, { fontSize: sf(FontSize.sm), lineHeight: sf(FontSize.sm) * 1.5 }]}>{statusConfig.subtitle}</Text>
         </View>
 
         {/* ETA pill — only shown while driver is coming */}
         {phase === 'driver_coming' && (
           <View style={styles.etaPill}>
-            <Text style={styles.etaLabel}>ETA</Text>
+            <Text style={[styles.etaLabel, { fontSize: sf(FontSize.xs) }]}>ETA</Text>
             <Text
-              style={styles.etaValue}
+              style={[styles.etaValue, { fontSize: sf(FontSize.base) }]}
               accessibilityLabel={`Estimated time of arrival: ${formatEta(etaSeconds)}`}
             >
               {formatEta(etaSeconds)}
@@ -236,7 +274,7 @@ export default function LiveRideScreen({
 
         {/* Driver card */}
         <View style={styles.card}>
-          <Text style={styles.cardHeading}>Your driver</Text>
+          <Text style={[styles.cardHeading, { fontSize: sf(FontSize.xs) }]}>Your driver</Text>
 
           <View style={styles.driverRow}>
             {/* Avatar placeholder */}
@@ -244,16 +282,16 @@ export default function LiveRideScreen({
               style={styles.avatarCircle}
               accessibilityLabel={`Driver ${driverName}'s profile picture`}
             >
-              <Text style={styles.avatarInitial}>
+              <Text style={[styles.avatarInitial, { fontSize: sf(28) }]}>
                 {driverName.charAt(0).toUpperCase()}
               </Text>
             </View>
 
             <View style={styles.driverInfo}>
-              <Text style={styles.driverName}>{driverName}</Text>
+              <Text style={[styles.driverName, { fontSize: sf(FontSize.lg) }]}>{driverName}</Text>
               <View style={styles.ratingRow}>
                 <Text style={styles.ratingStar}>⭐</Text>
-                <Text style={styles.ratingText}>
+                <Text style={[styles.ratingText, { fontSize: sf(FontSize.sm) }]}>
                   {driverRating.toFixed(1)}
                 </Text>
               </View>
@@ -264,14 +302,14 @@ export default function LiveRideScreen({
           <View style={styles.divider} />
           <View style={styles.vehicleRow}>
             <View style={styles.vehicleItem}>
-              <Text style={styles.vehicleLabel}>Vehicle</Text>
-              <Text style={styles.vehicleValue}>{driverVehicle}</Text>
+              <Text style={[styles.vehicleLabel, { fontSize: sf(FontSize.xs) }]}>Vehicle</Text>
+              <Text style={[styles.vehicleValue, { fontSize: sf(FontSize.sm) }]}>{driverVehicle}</Text>
             </View>
             <View style={styles.vehicleSeparator} />
             <View style={styles.vehicleItem}>
-              <Text style={styles.vehicleLabel}>Plate</Text>
+              <Text style={[styles.vehicleLabel, { fontSize: sf(FontSize.xs) }]}>Plate</Text>
               <Text
-                style={[styles.vehicleValue, styles.plateText]}
+                style={[styles.vehicleValue, styles.plateText, { fontSize: sf(FontSize.sm) }]}
                 accessibilityLabel={`License plate: ${driverPlate}`}
               >
                 {driverPlate}
@@ -282,11 +320,11 @@ export default function LiveRideScreen({
 
         {/* Destination card */}
         <View style={styles.card}>
-          <Text style={styles.cardHeading}>Destination</Text>
+          <Text style={[styles.cardHeading, { fontSize: sf(FontSize.xs) }]}>Destination</Text>
           <View style={styles.destRow}>
             <Text style={styles.destPin}>📍</Text>
             <Text
-              style={styles.destText}
+              style={[styles.destText, { fontSize: sf(FontSize.base), lineHeight: sf(FontSize.base) * 1.45 }]}
               accessibilityLabel={`Your destination is ${destination}`}
             >
               {destination}
@@ -299,6 +337,7 @@ export default function LiveRideScreen({
           pickup={pickup}
           destination={destCoord}
           driverCoord={phase !== 'completed' ? driverCoord : undefined}
+          vehicleColor={extractVehicleColor(driverVehicle)}
           showRoute
           height={270}
         />
@@ -315,7 +354,7 @@ export default function LiveRideScreen({
               accessibilityLabel="I'm home"
               accessibilityHint="Tap to confirm you've arrived safely and finish the ride"
             >
-              <Text style={styles.primaryBtnText}>🏠  I'm Home</Text>
+              <Text style={[styles.primaryBtnText, { fontSize: sf(FontSize.base) }]}>🏠  I'm Home</Text>
             </TouchableOpacity>
           ) : phase === 'driver_coming' ? (
             /* Can still cancel before driver arrives */
@@ -327,12 +366,12 @@ export default function LiveRideScreen({
               accessibilityLabel="Cancel ride"
               accessibilityHint="Tap to cancel your current ride request"
             >
-              <Text style={styles.cancelBtnText}>Cancel ride</Text>
+              <Text style={[styles.cancelBtnText, { fontSize: sf(FontSize.sm) }]}>Cancel ride</Text>
             </TouchableOpacity>
           ) : (
             /* In-progress — nothing to do but wait */
             <View style={styles.inProgressNote}>
-              <Text style={styles.inProgressText}>
+              <Text style={[styles.inProgressText, { fontSize: sf(FontSize.sm), lineHeight: sf(FontSize.sm) * 1.55 }]}>
                 Sit back and relax 🤠{'\n'}Your driver has everything under control.
               </Text>
             </View>
@@ -357,21 +396,21 @@ function getStatusConfig(
         emoji: '🚗',
         title: 'Driver on the way',
         subtitle: `${driverName} is heading to your pickup — ${etaStr}`,
-        bannerColor: '#1B4332',
+        bannerColor: Colors.primaryDark, // gu-020: was hardcoded green
       };
     case 'driver_arrived':
       return {
         emoji: '🙋',
         title: 'Your driver is here!',
         subtitle: `Look for ${driverName} outside. They're waiting for you.`,
-        bannerColor: '#1B4332',
+        bannerColor: Colors.primaryDark, // gu-020: was hardcoded green
       };
     case 'in_progress':
       return {
         emoji: '🛣️',
         title: 'Ride in progress',
         subtitle: `On the way to ${destination}.`,
-        bannerColor: '#1B4332',
+        bannerColor: Colors.primaryDark, // gu-020: was hardcoded green
       };
     case 'almost_there':
       return {
@@ -385,7 +424,7 @@ function getStatusConfig(
         emoji: '✅',
         title: `You've arrived!`,
         subtitle: `Welcome to ${destination}. Hope the ride was great!`,
-        bannerColor: '#145A32',
+        bannerColor: Colors.surface,  // Navy — white text high contrast ✅
       };
   }
 }
@@ -419,7 +458,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statusEmoji: {
-    fontSize: 52,
+    fontSize: FontSize.hero, // decorative status emoji — intentionally large
     marginBottom: Spacing.sm,
   },
   statusTitle: {
@@ -502,9 +541,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarInitial: {
-    fontSize: 28,
+    fontSize: FontSize.lg,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: '#000000', // Black on gold avatar — WCAG AAA
   },
   driverInfo: {
     flex: 1,
@@ -521,7 +560,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   ratingStar: {
-    fontSize: 16,
+    fontSize: FontSize.xs,
   },
   ratingText: {
     fontSize: FontSize.sm,
@@ -574,7 +613,7 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   destPin: {
-    fontSize: 22,
+    fontSize: FontSize.base,
     marginTop: 1,
   },
   destText: {
@@ -589,7 +628,7 @@ const styles = StyleSheet.create({
   mapPlaceholder: {
     marginHorizontal: Spacing.lg,
     height: 180,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: Colors.surface,
     borderRadius: Radius.lg,
     alignItems: 'center',
     justifyContent: 'center',
@@ -599,7 +638,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   mapEmoji: {
-    fontSize: 44,
+    fontSize: FontSize.hero, // decorative map placeholder emoji
   },
   mapLabel: {
     fontSize: FontSize.sm,
@@ -627,7 +666,7 @@ const styles = StyleSheet.create({
   primaryBtnText: {
     fontSize: FontSize.base,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: '#000000',  // Black on gold = 8.6:1 ✅
   },
   cancelBtn: {
     borderWidth: 1.5,
@@ -644,7 +683,7 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
   },
   inProgressNote: {
-    backgroundColor: '#E8F5E9',
+    backgroundColor: Colors.surface,
     borderRadius: Radius.lg,
     padding: Spacing.lg,
     alignItems: 'center',

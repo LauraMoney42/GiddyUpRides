@@ -59,14 +59,14 @@ export default function NameSetupScreen({ onDone, onBack }: Props) {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView contentContainerStyle={styles.container} bounces={false}>
-          {/* Header */}
-          <Text style={styles.stepLabel}>Almost done!</Text>
-          <Text style={[styles.title, { fontSize: sf(30) }]} accessibilityRole="header">
+          {/* Progress dots — 7 steps, this is step 4 (index 3) */}
+          <View style={styles.dotsRow} accessibilityLabel="Step 4 of 7">
+            {[0, 1, 2, 3, 4, 5, 6].map(i => (
+              <View key={i} style={[styles.dot, i === 3 && styles.dotActive]} />
+            ))}
+          </View>
+          <Text style={[styles.title, { fontSize: sf(30), lineHeight: sf(30) * 1.4 }]} accessibilityRole="header">
             What's your first name?
-          </Text>
-          <Text style={[styles.subtitle, { fontSize: sf(16) }]}>
-            We'll use this so your driver knows who to look for.{'\n'}
-            First name only — no last name needed.
           </Text>
 
           {/* Name input */}
@@ -102,7 +102,7 @@ export default function NameSetupScreen({ onDone, onBack }: Props) {
 
           {/* Privacy note */}
           <View style={styles.privacyNote}>
-            <Text style={[styles.privacyText, { fontSize: sf(14) }]}>
+            <Text style={[styles.privacyText, { fontSize: sf(14), lineHeight: sf(14) * 1.6 }]}>
               🔒  Your name is only used to identify you to your driver.
               We never share your personal information.
             </Text>
@@ -129,7 +129,7 @@ export default function NameSetupScreen({ onDone, onBack }: Props) {
               activeOpacity={name.trim() ? 0.85 : 1}
             >
               <Text style={[styles.doneButtonText, { fontSize: sf(19) }]}>
-                {name.trim() ? `Let's Ride, ${name.trim()}! 🐴` : "Let's Ride! 🐴"}
+                Let's Ride! 🐴
               </Text>
             </TouchableOpacity>
           </View>
@@ -150,12 +150,22 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.xxl,
     flexGrow: 1,
   },
-  stepLabel: {
-    fontSize: 14,
-    color: Colors.primary,
-    fontWeight: '700',
-    marginBottom: Spacing.sm,
-    letterSpacing: 0.5,
+  // Progress dots (replaces "Almost done!" label)
+  dotsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.xl,
+  },
+  dot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: Colors.border,
+  },
+  dotActive: {
+    backgroundColor: Colors.primary,
+    width: 28,
   },
   title: {
     fontWeight: '800',
@@ -194,7 +204,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: Colors.sos,
-    fontSize: 15,
+    fontSize: FontSize.xs,
     marginTop: Spacing.xs,
     fontWeight: '500',
   },
@@ -249,12 +259,13 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   doneButtonDisabled: {
-    backgroundColor: Colors.disabled,
+    // gu-letsride-btn-001: keep gold bg, reduce opacity — avoids navy/dark appearance
+    opacity: 0.4,
     shadowOpacity: 0,
     elevation: 0,
   },
   doneButtonText: {
-    color: '#fff',
+    color: '#000000', // Black on gold — WCAG AAA contrast
     fontWeight: '800',
     letterSpacing: 0.2,
     textAlign: 'center',

@@ -69,6 +69,9 @@ GiddyUpRides/
 3. Done → home screen
 
 ### Accessibility Suite
+
+**Text Size Floor**: All user-facing text must render at a minimum of the user's selected text size. No hardcoded `fontSize` values may produce text smaller than the user's chosen scale. Always use `sf(FontSize.x)` (or the project's equivalent scaling helper) instead of raw pixel values.
+
 | Feature | Detail |
 |---|---|
 | Default large font | 22pt+ base, Dynamic Type support |

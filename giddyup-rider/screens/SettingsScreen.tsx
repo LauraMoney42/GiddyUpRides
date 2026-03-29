@@ -21,22 +21,26 @@ import {
   Alert,
 } from 'react-native';
 import { Colors, FontSize, Radius, Spacing, TouchTarget } from '../constants/theme';
+import { useAccessibility } from '../context/AccessibilityContext';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type TextSizeOption = 'normal' | 'large' | 'extra-large';
+type TextSizeOption = 'normal' | 'large' | 'extra-large' | 'xxl';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const APP_VERSION = '1.0.0 (MVP1)';
-const SUPPORT_EMAIL = 'hello@kindcode.ca';
-const PRIVACY_URL = 'https://kindcode.ca/privacy';
-const TERMS_URL = 'https://kindcode.ca/terms';
+const SUPPORT_EMAIL  = 'kindcodedevelopment@gmail.com'; // gu-027: KindCode dev team
+const KINDCODE_URL   = 'https://kindcode.us';            // gu-027: KindCode website
+// TODO gu-027: confirm correct URLs with owner before updating
+const PRIVACY_URL    = 'https://kindcode.ca/privacy';
+const TERMS_URL      = 'https://kindcode.ca/terms';
 
 const TEXT_SIZE_OPTIONS: { value: TextSizeOption; label: string; preview: number }[] = [
   { value: 'normal',      label: 'Normal',      preview: 20 },
   { value: 'large',       label: 'Large',       preview: 24 },
   { value: 'extra-large', label: 'Extra Large', preview: 30 },
+  { value: 'xxl',         label: 'XXL',         preview: 36 },
 ];
 
 // ── SettingsScreen ─────────────────────────────────────────────────────────────
@@ -45,13 +49,20 @@ interface SettingsScreenProps {
   userName?: string;
   onBack?: () => void;
   onSignOut?: () => void;
+  onEmergencyContacts?: () => void; // gu-019
+  onMobilitySettings?: () => void;  // gu-029
 }
 
 export default function SettingsScreen({
   userName = 'Dorothy',
   onBack,
   onSignOut,
+  onEmergencyContacts,
+  onMobilitySettings,
 }: SettingsScreenProps) {
+  const { fontScale, prefs } = useAccessibility();
+  const sf = (base: number) => Math.round(base * fontScale);
+
   // Accessibility prefs — TODO: persist to AsyncStorage (gu-003 integration)
   const [textSize, setTextSize]           = useState<TextSizeOption>('large');
   const [readAloud, setReadAloud]         = useState(false);
@@ -59,13 +70,18 @@ export default function SettingsScreen({
 
   // Account
   const [displayName] = useState(userName);
-  const [emergencyContact] = useState('');
+  // gu-019: derive display text from context contacts
+  const emergencyContactCount = prefs.emergencyContacts.length;
+  const emergencyContactLabel = emergencyContactCount > 0
+    ? `${emergencyContactCount} contact${emergencyContactCount > 1 ? 's' : ''} saved`
+    : 'Not set';
 
   const handleBugReport = () => {
     Vibration.vibrate(50);
-    const subject = encodeURIComponent('GiddyUp Rides — Bug / Question');
+    // gu-027: subject + body reference "Giddy-Up Rides" brand name
+    const subject = encodeURIComponent('Giddy-Up Rides — Bug / Question');
     const body = encodeURIComponent(
-      'Hi KindCode team,\n\nI have a question or found an issue:\n\n[Please describe here]\n\nApp version: ' + APP_VERSION
+      'Hi KindCode team,\n\nI have a question or found an issue with Giddy-Up Rides:\n\n[Please describe here]\n\nApp version: ' + APP_VERSION
     );
     Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`).catch(() => {
       Alert.alert(
@@ -74,6 +90,12 @@ export default function SettingsScreen({
         [{ text: 'OK' }]
       );
     });
+  };
+
+  // gu-027: KindCode website link
+  const handleKindCode = () => {
+    Vibration.vibrate(50);
+    Linking.openURL(KINDCODE_URL);
   };
 
   const handlePrivacy = () => {
@@ -116,7 +138,7 @@ export default function SettingsScreen({
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
         )}
-        <Text style={styles.headerTitle}>Settings</Text>
+        <Text style={[styles.headerTitle, { fontSize: sf(FontSize.xl) }]} numberOfLines={1} adjustsFontSizeToFit>Settings</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -208,13 +230,30 @@ export default function SettingsScreen({
         <SettingRow
           emoji="📞"
           label="Emergency Contact"
-          value={emergencyContact || 'Not set'}
+          value={emergencyContactLabel}
           onPress={() => {
             Vibration.vibrate(50);
-            Alert.alert('Coming soon', 'Emergency contact setup will be available in the next update.');
+            onEmergencyContacts?.();
           }}
-          accessibilityLabel={`Emergency contact: ${emergencyContact || 'Not set'}`}
-          accessibilityHint="Tap to add or change your emergency contact"
+          accessibilityLabel={`Emergency contact: ${emergencyContactLabel}`}
+          accessibilityHint="Tap to add or change your emergency contacts"
+          showChevron
+        />
+
+        {/* gu-029: Mobility & Accessibility */}
+        <SettingRow
+          emoji="♿"
+          label="Mobility & Accessibility"
+          value={prefs.mobilityNeeds.length > 0
+            ? `${prefs.mobilityNeeds.length} need${prefs.mobilityNeeds.length > 1 ? 's' : ''} saved`
+            : 'Not set'}
+          onPress={() => {
+            Vibration.vibrate(50);
+            onMobilitySettings?.();
+          }}
+          accessibilityLabel="Mobility and accessibility needs"
+          accessibilityHint="Tap to tell drivers about any mobility or accessibility needs before your ride"
+          showChevron
         />
 
         {/* ── Support ────────────────────────────────────────────────── */}
@@ -225,7 +264,17 @@ export default function SettingsScreen({
           label="Report a Bug / Ask a Question"
           onPress={handleBugReport}
           accessibilityLabel="Report a bug or ask a question"
-          accessibilityHint="Opens your email app to contact the KindCode support team"
+          accessibilityHint="Opens your email app to contact the Giddy-Up Rides support team"
+          showChevron
+        />
+
+        {/* gu-027: KindCode website */}
+        <SettingRow
+          emoji="🌐"
+          label="Built by KindCode"
+          onPress={handleKindCode}
+          accessibilityLabel="Visit the KindCode website"
+          accessibilityHint="Opens kindcode.us in your browser"
           showChevron
         />
 
@@ -391,7 +440,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   backIcon: {
-    fontSize: 28,
+    fontSize: FontSize.lg,
     color: Colors.primary,
     fontWeight: '600',
   },
@@ -425,7 +474,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xs,
   },
   sectionEmoji: {
-    fontSize: 20,
+    fontSize: FontSize.sm,
   },
   sectionTitle: {
     fontSize: FontSize.sm,
@@ -453,7 +502,7 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   rowEmoji: {
-    fontSize: 24,
+    fontSize: FontSize.base,
     width: 32,
     textAlign: 'center',
   },
@@ -469,10 +518,9 @@ const styles = StyleSheet.create({
   rowSubLabel: {
     fontSize: FontSize.sm,
     color: Colors.textSecondary,
-    lineHeight: 24,
   },
   chevron: {
-    fontSize: 28,
+    fontSize: FontSize.lg,
     color: Colors.textSecondary,
     fontWeight: '300',
   },

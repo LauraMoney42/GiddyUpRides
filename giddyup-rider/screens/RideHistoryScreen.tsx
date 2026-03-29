@@ -23,6 +23,7 @@ import {
 } from 'react-native';
 import { Colors, FontSize, Radius, Spacing, TouchTarget } from '../constants/theme';
 import SOSButton from '../components/SOSButton';
+import { useAccessibility } from '../context/AccessibilityContext';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -152,6 +153,9 @@ interface RideHistoryScreenProps {
 }
 
 export default function RideHistoryScreen({ onBack, onRebook }: RideHistoryScreenProps) {
+  const { fontScale } = useAccessibility();
+  const sf = (base: number) => Math.round(base * fontScale);
+
   const [filter, setFilter] = useState<FilterTab>('all');
 
   const filtered = MOCK_RIDE_HISTORY.filter((r) => {
@@ -196,25 +200,25 @@ export default function RideHistoryScreen({ onBack, onRebook }: RideHistoryScree
           >
             <Text style={styles.backArrow}>← Back</Text>
           </TouchableOpacity>
-          <Text style={styles.screenTitle}>Ride History</Text>
+          <Text style={[styles.screenTitle, { fontSize: sf(FontSize.lg) }]} numberOfLines={1} adjustsFontSizeToFit>Ride History</Text>
           <View style={styles.backButton} />
         </View>
 
         {/* ── Summary strip ─────────────────────────────────────────────── */}
         <View style={styles.summaryStrip}>
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryNumber}>{completedCount}</Text>
-            <Text style={styles.summaryLabel}>Rides</Text>
+            <Text style={[styles.summaryNumber, { fontSize: sf(FontSize.xl) }]} numberOfLines={1} adjustsFontSizeToFit>{completedCount}</Text>
+            <Text style={[styles.summaryLabel, { fontSize: sf(FontSize.xs) }]}>Rides</Text>
           </View>
           <View style={styles.summaryDivider} />
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryNumber}>${totalSpend.toFixed(2)}</Text>
-            <Text style={styles.summaryLabel}>Total Spent</Text>
+            <Text style={[styles.summaryNumber, { fontSize: sf(FontSize.xl) }]} numberOfLines={1} adjustsFontSizeToFit>${totalSpend.toFixed(2)}</Text>
+            <Text style={[styles.summaryLabel, { fontSize: sf(FontSize.xs) }]}>Total Spent</Text>
           </View>
           <View style={styles.summaryDivider} />
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryNumber}>{MOCK_RIDE_HISTORY.length}</Text>
-            <Text style={styles.summaryLabel}>All Time</Text>
+            <Text style={[styles.summaryNumber, { fontSize: sf(FontSize.xl) }]} numberOfLines={1} adjustsFontSizeToFit>{MOCK_RIDE_HISTORY.length}</Text>
+            <Text style={[styles.summaryLabel, { fontSize: sf(FontSize.xs) }]}>All Time</Text>
           </View>
         </View>
 
@@ -371,12 +375,12 @@ const styles = StyleSheet.create({
   },
   summaryNumber: {
     fontSize: FontSize.xl,
-    color: '#FFFFFF',
+    color: '#000000', // Black on gold strip — WCAG AAA
     fontWeight: '900',
   },
   summaryLabel: {
     fontSize: FontSize.xs,
-    color: 'rgba(255,255,255,0.75)',
+    color: 'rgba(0,0,0,0.65)',
     fontWeight: '600',
     marginTop: 2,
   },
@@ -527,7 +531,7 @@ const styles = StyleSheet.create({
   },
   rebookText: {
     fontSize: FontSize.base,
-    color: '#FFFFFF',
+    color: '#000000', // Black on gold — WCAG AAA
     fontWeight: '800',
   },
 
@@ -538,7 +542,7 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   emptyEmoji: {
-    fontSize: 48,
+    fontSize: FontSize.hero,
   },
   emptyText: {
     fontSize: FontSize.lg,

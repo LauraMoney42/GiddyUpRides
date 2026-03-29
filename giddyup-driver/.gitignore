@@ -1,8 +1,39 @@
+# ── Secrets ───────────────────────────────────────────────────────────────────
+.env
+.env.local
+.env.production
+.env.staging
+.env.development
+.env.*
+google-services.json
+GoogleService-Info.plist
+
+# ── Dependencies ──────────────────────────────────────────────────────────────
 node_modules/
+
+# ── Expo build artifacts ──────────────────────────────────────────────────────
 .expo/
 dist/
-.env
-*.env.local
-.DS_Store
+web-build/
+
+# ── iOS build artifacts ───────────────────────────────────────────────────────
+ios/build/
+ios/Pods/
+*.ipa
 ios/
+
+# ── Android build artifacts ───────────────────────────────────────────────────
+android/build/
+android/app/build/
+android/.gradle/
+*.apk
+*.aab
+*.keystore
 android/
+
+# ── macOS ─────────────────────────────────────────────────────────────────────
+.DS_Store
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+npm-debug.log*

@@ -3,19 +3,19 @@
 // Accessibility-first: large fonts, high-contrast, generous touch targets.
 
 export const Colors = {
-  primary: '#2D6A4F',      // Deep green — primary action
-  primaryDark: '#1B4332',  // Darker green — pressed state
+  primary: '#C8963E',      // Warm Gold — primary action (gu-020)
+  primaryDark: '#A67A2E',  // Deep Gold — pressed state (gu-020)
   accent: '#F4A261',       // Warm amber — highlights, SOS warning
-  sos: '#D62828',          // Red — SOS / emergency button
-  sosDark: '#9B1C1C',      // Darker red — SOS pressed state
-  background: '#F8F9FA',   // Off-white background
-  surface: '#FFFFFF',      // Card surface
-  textPrimary: '#1A1A2E',  // Near-black — main text
-  textSecondary: '#4A4A6A',// Dark grey — secondary text
-  border: '#DDE2E8',       // Light grey border
-  success: '#2D6A4F',      // Green — confirmed
+  sos: '#D62828',          // Red — SOS / emergency button (unchanged)
+  sosDark: '#9B1C1C',      // Darker red — SOS pressed state (unchanged)
+  background: '#1A2744',   // Deep Navy — app background (gu-020)
+  surface: '#243255',      // Navy surface — card background (gu-020)
+  textPrimary: '#FFFFFF',  // White — main text on dark bg (gu-020)
+  textSecondary: '#B0BEC5',// Light blue-grey — secondary text (gu-020)
+  border: '#2E3F6E',       // Navy border — subtle on dark bg (gu-020)
+  success: '#4CAF50',      // Green — confirmed (adjusted for dark bg)
   warning: '#F4A261',      // Amber — in-progress
-  disabled: '#B0B0C0',     // Grey — disabled state
+  disabled: '#4A5A7A',     // Muted navy — disabled state on dark bg (gu-020)
 };
 
 // Minimum touch target per accessibility spec: 60×60pt
@@ -49,5 +49,6 @@ export const Radius = {
   sm: 8,
   md: 16,
   lg: 24,
+  xl: 32,   // added for BookingScreen + ScheduleRideScreen large cards
   full: 999,
 };

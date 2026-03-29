@@ -21,17 +21,20 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
+  ScrollView,
   Vibration,
   Linking,
   Animated,
 } from 'react-native';
-import { FontSize, Radius, Spacing, TouchTarget } from '../constants/theme';
+import { Colors, FontSize, Radius, Spacing, TouchTarget } from '../constants/theme';
+import { useAccessibility } from '../context/AccessibilityContext';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type SOSPhase = 'countdown' | 'alerting' | 'alerted';
 
-interface EmergencyContact {
+// Internal display type (adds notified flag for Phase 3 UI)
+interface EmergencyContactDisplay {
   name: string;
   role: string;
   phone: string;
@@ -45,14 +48,15 @@ interface SOSScreenProps {
   userName?: string;
 }
 
-// ── Mock emergency contacts ────────────────────────────────────────────────────
-// TODO (gu-002): pull from Firestore rider profile once Firebase is wired
-const MOCK_CONTACTS: EmergencyContact[] = [
-  { name: 'Margaret',    role: 'Primary caregiver', phone: '+15550001111', notified: true },
-  { name: 'GiddyUp HQ', role: 'Dispatch',           phone: '+15550009999', notified: true },
-];
-
 const COUNTDOWN_SECS = 5;
+
+// gu-019: Dispatch is always notified — user's personal contacts are added from context
+const DISPATCH_CONTACT: EmergencyContactDisplay = {
+  name: 'GiddyUp HQ',
+  role: 'Dispatch',
+  phone: '+15550009999',
+  notified: true,
+};
 
 // ── SOSScreen ─────────────────────────────────────────────────────────────────
 
@@ -60,6 +64,20 @@ export default function SOSScreen({
   onDismiss,
   userName = 'there',
 }: SOSScreenProps) {
+  const { fontScale, prefs } = useAccessibility();
+
+  // gu-019: Build contact list from user's saved contacts + always include dispatch
+  const displayContacts: EmergencyContactDisplay[] = [
+    ...prefs.emergencyContacts.map(c => ({
+      name: c.name,
+      role: c.role ?? '',
+      phone: c.phone,
+      notified: true,
+    })),
+    DISPATCH_CONTACT,
+  ];
+  const sf = (base: number) => Math.round(base * fontScale);
+
   const [phase, setPhase]             = useState<SOSPhase>('countdown');
   const [secondsLeft, setSecondsLeft] = useState(COUNTDOWN_SECS);
   const pulseAnim                     = useRef(new Animated.Value(1)).current;
@@ -133,18 +151,33 @@ export default function SOSScreen({
   return (
     <SafeAreaView style={styles.safeArea}>
 
+      {/* gu-sos-icon-001: Static SOS badge — top-right on every phase, matches
+          real button location on all app screens. White circle/red text so it's
+          visible on the red background. Non-interactive visual only. */}
+      <View
+        style={styles.sosIconBadge}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      >
+        <Text style={styles.sosIconText}>SOS</Text>
+      </View>
+
       {/* ── PHASE 1: Countdown ─────────────────────────────────────────── */}
       {phase === 'countdown' && (
-        <View style={styles.centerContainer}>
+        <ScrollView
+          contentContainerStyle={styles.centerContainer}
+          bounces={false}
+          keyboardShouldPersistTaps="handled"
+        >
           <Text
-            style={styles.headingCountdown}
+            style={[styles.headingCountdown, { fontSize: sf(FontSize.xl) }]}
             accessibilityRole="header"
             accessibilityLabel="Calling for help"
           >
             Calling for help…
           </Text>
 
-          <Text style={styles.subHeading}>
+          <Text style={[styles.subHeading, { fontSize: sf(FontSize.base), lineHeight: sf(FontSize.base) * 1.5 }]}>
             Alerting your contacts in:
           </Text>
 
@@ -153,7 +186,13 @@ export default function SOSScreen({
             style={[styles.countdownCircle, { transform: [{ scale: pulseAnim }] }]}
             accessibilityLabel={`${secondsLeft} seconds until alert is sent`}
           >
-            <Text style={styles.countdownNumber}>{secondsLeft}</Text>
+            <Text
+              style={styles.countdownNumber}
+              adjustsFontSizeToFit
+              numberOfLines={1}
+            >
+              {secondsLeft}
+            </Text>
           </Animated.View>
 
           {/* Cancel — large, obvious */}
@@ -165,26 +204,28 @@ export default function SOSScreen({
             accessibilityLabel="Cancel — I am okay"
             accessibilityHint="Tap to cancel the SOS alert. No one will be contacted."
           >
-            <Text style={styles.cancelBtnText}>✕  I'm Okay — Cancel</Text>
+            <Text style={[styles.cancelBtnText, { fontSize: sf(FontSize.base) }]}>✕  I'm Okay — Cancel</Text>
           </TouchableOpacity>
 
-          <Text style={styles.cancelNote}>
+          <Text style={[styles.cancelNote, { fontSize: sf(FontSize.xs) }]}>
             Tap cancel before the timer reaches zero to stop the alert.
           </Text>
-        </View>
+        </ScrollView>
       )}
 
       {/* ── PHASE 2: Alerting ──────────────────────────────────────────── */}
       {phase === 'alerting' && (
-        <View style={styles.centerContainer}>
-          <Text style={styles.alertingEmoji}>📡</Text>
+        <ScrollView
+          contentContainerStyle={styles.centerContainer}
+          bounces={false}
+        >
           <Text
-            style={styles.headingCountdown}
+            style={[styles.headingCountdown, { fontSize: sf(FontSize.xl) }]}
             accessibilityRole="header"
           >
             Sending alert…
           </Text>
-          <Text style={styles.subHeading}>
+          <Text style={[styles.subHeading, { fontSize: sf(FontSize.base), lineHeight: sf(FontSize.base) * 1.5 }]}>
             Notifying your emergency contacts right now.
           </Text>
 
@@ -194,25 +235,29 @@ export default function SOSScreen({
               <View key={i} style={styles.dot} />
             ))}
           </View>
-        </View>
+        </ScrollView>
       )}
 
       {/* ── PHASE 3: Alerted ───────────────────────────────────────────── */}
       {phase === 'alerted' && (
-        <View style={styles.alertedContainer}>
+        <ScrollView
+          style={{ flex: 1, backgroundColor: '#FFFFFF' }}
+          contentContainerStyle={styles.alertedContainer}
+          showsVerticalScrollIndicator={false}
+        >
           {/* Big confirmed check */}
           <View style={styles.confirmedCircle}>
             <Text style={styles.confirmedCheck}>✓</Text>
           </View>
 
           <Text
-            style={styles.headingAlerted}
+            style={[styles.headingAlerted, { fontSize: sf(FontSize.xl) }]}
             accessibilityRole="header"
           >
             Help is on the way
           </Text>
 
-          <Text style={styles.alertedSub}>
+          <Text style={[styles.alertedSub, { fontSize: sf(FontSize.sm), lineHeight: sf(FontSize.sm) * 1.55 }]}>
             Hi {userName} — your contacts have been notified and your location has been shared.
             Stay where you are if it's safe to do so.
           </Text>
@@ -221,7 +266,7 @@ export default function SOSScreen({
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>CONTACTS NOTIFIED</Text>
 
-            {MOCK_CONTACTS.map(contact => (
+            {displayContacts.map(contact => (
               <TouchableOpacity
                 key={contact.phone}
                 style={styles.contactRow}
@@ -256,7 +301,7 @@ export default function SOSScreen({
             accessibilityLabel="Call 911"
             accessibilityHint="Tap to call emergency services directly"
           >
-            <Text style={styles.call911Text}>📞  Call 911 Now</Text>
+            <Text style={[styles.call911Text, { fontSize: sf(FontSize.base) }]}>📞  Call 911 Now</Text>
           </TouchableOpacity>
 
           {/* I'm Safe — dismiss */}
@@ -268,13 +313,13 @@ export default function SOSScreen({
             accessibilityLabel="I am safe now"
             accessibilityHint="Tap to let your contacts know you are safe and return to the app"
           >
-            <Text style={styles.safeBtnText}>✓  I'm Safe Now</Text>
+            <Text style={[styles.safeBtnText, { fontSize: sf(FontSize.base) }]}>✓  I'm Safe Now</Text>
           </TouchableOpacity>
 
-          <Text style={styles.safeNote}>
+          <Text style={[styles.safeNote, { fontSize: sf(FontSize.xs) }]}>
             Tapping "I'm Safe" will notify your contacts that you are okay.
           </Text>
-        </View>
+        </ScrollView>
       )}
 
     </SafeAreaView>
@@ -311,7 +356,7 @@ const styles = StyleSheet.create({
   },
   subHeading: {
     fontSize: FontSize.base,
-    color: 'rgba(255,255,255,0.85)',
+    color: '#FFFFFF', // gu-037: 0.85 opacity on red = ~4.8:1 borderline → pure white 5.7:1 ✅
     textAlign: 'center',
     lineHeight: 30,
   },
@@ -328,7 +373,7 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   countdownNumber: {
-    fontSize: 80,
+    fontSize: FontSize.hero, // intentionally large — SOS countdown must be unmissable
     fontWeight: '900',
     color: SOS_RED,
     lineHeight: 90,
@@ -352,15 +397,39 @@ const styles = StyleSheet.create({
   },
   cancelNote: {
     fontSize: FontSize.xs,
-    color: 'rgba(255,255,255,0.65)',
+    color: '#FFFFFF', // gu-037: 0.65 opacity on red = 3.9:1 ❌ → pure white ✅
     textAlign: 'center',
     lineHeight: 22,
+    opacity: 0.9,     // tiny visual softening without sacrificing contrast
+  },
+
+  // gu-sos-icon-001: Static SOS badge — absolute top-right, all phases.
+  // White circle + red text = visible on red background; mirrors real button.
+  sosIconBadge: {
+    position: 'absolute',
+    top: Spacing.md,
+    right: Spacing.md,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  sosIconText: {
+    color: SOS_RED,
+    fontSize: FontSize.sm,
+    fontWeight: '900',
+    letterSpacing: 1,
   },
 
   // ── Alerting phase
-  alertingEmoji: {
-    fontSize: 64,
-  },
   dotsRow: {
     flexDirection: 'row',
     gap: 12,
@@ -370,7 +439,8 @@ const styles = StyleSheet.create({
     width: 14,
     height: 14,
     borderRadius: 7,
-    backgroundColor: 'rgba(255,255,255,0.6)',
+    backgroundColor: '#FFFFFF', // gu-037: 0.60 opacity on red = 3.9:1 ❌ → pure white ✅
+    opacity: 0.9,
   },
 
   // ── Alerted phase
@@ -393,7 +463,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   confirmedCheck: {
-    fontSize: 40,
+    fontSize: FontSize.xxl,
     fontWeight: '900',
     color: '#FFFFFF',
   },
@@ -490,7 +560,7 @@ const styles = StyleSheet.create({
   // I'm Safe
   safeBtn: {
     borderWidth: 2,
-    borderColor: '#2D6A4F',
+    borderColor: Colors.success, // gu-020: was hardcoded green
     borderRadius: Radius.lg,
     paddingVertical: 18,
     alignItems: 'center',
@@ -500,7 +570,7 @@ const styles = StyleSheet.create({
   safeBtnText: {
     fontSize: FontSize.base,
     fontWeight: '700',
-    color: '#2D6A4F',
+    color: Colors.success, // gu-020: was hardcoded green
   },
   safeNote: {
     fontSize: FontSize.xs,

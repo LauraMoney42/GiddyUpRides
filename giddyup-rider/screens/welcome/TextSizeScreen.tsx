@@ -17,7 +17,7 @@ import {
   AccessibilityInfo,
   Vibration,
 } from 'react-native';
-import { Colors, Spacing, Radius, TouchTarget } from '../../constants/theme';
+import { Colors, FontSize, Spacing, Radius, TouchTarget } from '../../constants/theme';
 import { useAccessibility, TextSizeOption } from '../../context/AccessibilityContext';
 
 interface Props {
@@ -31,13 +31,15 @@ const SIZE_OPTIONS: {
   previewSize: number; // font size used in the live preview
   labelSize: number;   // font size for the option label itself
 }[] = [
-  { key: 'normal',  label: 'Normal',       description: 'Standard size',            previewSize: 18, labelSize: 20 },
-  { key: 'large',   label: 'Large',        description: 'Bigger and easier to read', previewSize: 24, labelSize: 24 },
-  { key: 'xlarge',  label: 'Extra Large',  description: 'Maximum readability',       previewSize: 30, labelSize: 28 },
+  { key: 'normal',  label: 'Normal',       description: 'Standard size',             previewSize: 18, labelSize: 20 },
+  { key: 'large',   label: 'Large',        description: 'Bigger and easier to read',  previewSize: 24, labelSize: 24 },
+  { key: 'xlarge',  label: 'Extra Large',  description: 'Even bigger',                previewSize: 30, labelSize: 28 },
+  { key: 'xxlarge', label: 'XXL',          description: 'Maximum size',               previewSize: 36, labelSize: 32 },
 ];
 
 export default function TextSizeScreen({ onNext }: Props) {
-  const { prefs, setTextSize } = useAccessibility();
+  const { prefs, setTextSize, fontScale } = useAccessibility();
+  const sf = (base: number) => Math.round(base * fontScale);
 
   const handleSelect = (size: TextSizeOption) => {
     Vibration.vibrate(40);
@@ -55,11 +57,8 @@ export default function TextSizeScreen({ onNext }: Props) {
         <Text style={styles.stepLabel}>Step 1 of 2</Text>
 
         {/* Title */}
-        <Text style={styles.title} accessibilityRole="header">
-          Choose your{'\n'}text size
-        </Text>
-        <Text style={styles.subtitle}>
-          You can change this any time in Settings.
+        <Text style={[styles.title, { fontSize: sf(26), lineHeight: sf(26) * 1.4 }]} accessibilityRole="header">
+          Text Size
         </Text>
 
         {/* Live preview box — updates instantly on selection */}
@@ -67,7 +66,7 @@ export default function TextSizeScreen({ onNext }: Props) {
           style={styles.previewBox}
           accessibilityLabel={`Live preview: text is currently ${selected} size`}
         >
-          <Text style={styles.previewLabel}>PREVIEW</Text>
+          <Text style={[styles.previewLabel, { fontSize: sf(15) }]}>PREVIEW</Text>
           <Text style={[styles.previewText, { fontSize: selectedOption.previewSize, lineHeight: selectedOption.previewSize * 1.5 }]}>
             Your ride is{'\n'}5 minutes away.
           </Text>
@@ -118,7 +117,7 @@ export default function TextSizeScreen({ onNext }: Props) {
           accessibilityLabel="Continue to next step"
           activeOpacity={0.85}
         >
-          <Text style={styles.nextButtonText}>Continue →</Text>
+          <Text style={[styles.nextButtonText, { fontSize: sf(20) }]}>Continue →</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -136,24 +135,19 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.xxl,
   },
   stepLabel: {
-    fontSize: 14,
+    fontSize: FontSize.xs,
     color: Colors.textSecondary,
     marginBottom: Spacing.sm,
     letterSpacing: 0.5,
   },
   title: {
-    fontSize: 34,
+    fontSize: FontSize.xl,
     fontWeight: '800',
     color: Colors.textPrimary,
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xl,
     lineHeight: 42,
   },
-  subtitle: {
-    fontSize: 17,
-    color: Colors.textSecondary,
-    marginBottom: Spacing.xl,
-    lineHeight: 24,
-  },
+  // subtitle removed — "You can change this any time in Settings" copy removed per UX feedback
 
   // Live preview
   previewBox: {
@@ -168,11 +162,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   previewLabel: {
-    fontSize: 11,
+    fontSize: FontSize.xs,
     color: Colors.textSecondary,
-    letterSpacing: 1.2,
+    letterSpacing: 1.4,
     marginBottom: Spacing.sm,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   previewText: {
     color: Colors.textPrimary,
@@ -197,7 +191,7 @@ const styles = StyleSheet.create({
   },
   optionButtonSelected: {
     borderColor: Colors.primary,
-    backgroundColor: '#EDF7F2',
+    backgroundColor: Colors.primary,  // Gold bg — black text = 8.6:1 ✅
   },
   optionRow: {
     flexDirection: 'row',
@@ -212,14 +206,14 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   optionLabelSelected: {
-    color: Colors.primary,
+    color: '#000000',  // Black on gold = 8.6:1 ✅
   },
   optionDescription: {
-    fontSize: 14,
+    fontSize: FontSize.xs,
     color: Colors.textSecondary,
   },
   optionDescriptionSelected: {
-    color: Colors.primary,
+    color: '#000000',  // Black on gold = 8.6:1 ✅
   },
   radio: {
     width: 26,
@@ -256,8 +250,8 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   nextButtonText: {
-    color: '#fff',
-    fontSize: 22,
+    color: '#000000',  // Black on gold = 8.6:1 ✅
+    fontSize: FontSize.base,
     fontWeight: '800',
     letterSpacing: 0.3,
   },

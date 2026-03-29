@@ -17,7 +17,8 @@ import {
   AccessibilityInfo,
   Vibration,
 } from 'react-native';
-import { Colors, Spacing, Radius, TouchTarget } from '../../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { Colors, FontSize, Spacing, Radius, TouchTarget } from '../../constants/theme';
 import { useAccessibility, ReadAloudOption } from '../../context/AccessibilityContext';
 
 interface Props {
@@ -26,27 +27,18 @@ interface Props {
 
 const OPTIONS: {
   key: ReadAloudOption;
-  emoji: string;
+  iconName: React.ComponentProps<typeof Ionicons>['name'];
   label: string;
-  description: string;
 }[] = [
   {
     key: 'yes',
-    emoji: '🔊',
+    iconName: 'volume-high',
     label: 'Yes, read things aloud',
-    description: 'The app will speak your driver info, ride status, and key updates',
   },
   {
     key: 'no',
-    emoji: '🔇',
+    iconName: 'volume-mute',
     label: 'No thanks',
-    description: "Silent mode — you'll read everything on screen yourself",
-  },
-  {
-    key: 'later',
-    emoji: '⏰',
-    label: 'Ask me later',
-    description: 'You can turn this on any time in Settings',
   },
 ];
 
@@ -57,10 +49,9 @@ export default function ReadAloudScreen({ onDone }: Props) {
   const handleSelect = (pref: ReadAloudOption) => {
     Vibration.vibrate(40);
     setReadAloud(pref);
+    // gu-023: only yes/no options remain
     AccessibilityInfo.announceForAccessibility(
-      pref === 'yes' ? 'Read aloud turned on' :
-      pref === 'no'  ? 'Read aloud turned off' :
-      'Will ask again later'
+      pref === 'yes' ? 'Read aloud turned on' : 'Read aloud turned off'
     );
   };
 
@@ -69,16 +60,16 @@ export default function ReadAloudScreen({ onDone }: Props) {
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.container} bounces={false}>
-        {/* Step indicator */}
-        <Text style={styles.stepLabel}>Step 2 of 2</Text>
+        {/* Progress dots — 7 steps, this is step 1 (index 0) */}
+        <View style={styles.dotsRow} accessibilityLabel="Step 1 of 7">
+          {[0, 1, 2, 3, 4, 5, 6].map(i => (
+            <View key={i} style={[styles.dot, i === 0 && styles.dotActive]} />
+          ))}
+        </View>
 
-        {/* Title */}
-        <Text style={[styles.title, { fontSize: sf(30) }]} accessibilityRole="header">
+        {/* Title — gu-023: no subtitle body text */}
+        <Text style={[styles.title, { fontSize: sf(30), lineHeight: sf(30) * 1.4 }]} accessibilityRole="header">
           Should the app read things aloud?
-        </Text>
-        <Text style={[styles.subtitle, { fontSize: sf(16) }]}>
-          This helps if reading small text is difficult.{'\n'}
-          You can change this any time in Settings.
         </Text>
 
         {/* Options */}
@@ -92,11 +83,16 @@ export default function ReadAloudScreen({ onDone }: Props) {
                 onPress={() => handleSelect(option.key)}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: isSelected }}
-                accessibilityLabel={`${option.label}. ${option.description}`}
+                accessibilityLabel={option.label}
                 activeOpacity={0.75}
               >
                 <View style={styles.optionRow}>
-                  <Text style={styles.optionEmoji}>{option.emoji}</Text>
+                  <Ionicons
+                    name={option.iconName}
+                    size={sf(30)}
+                    color={isSelected ? '#000000' : Colors.textPrimary}
+                    style={styles.optionIcon}
+                  />
                   <View style={styles.optionTextBlock}>
                     <Text style={[
                       styles.optionLabel,
@@ -104,13 +100,6 @@ export default function ReadAloudScreen({ onDone }: Props) {
                       isSelected && styles.optionLabelSelected,
                     ]}>
                       {option.label}
-                    </Text>
-                    <Text style={[
-                      styles.optionDescription,
-                      { fontSize: sf(14) },
-                      isSelected && styles.optionDescriptionSelected,
-                    ]}>
-                      {option.description}
                     </Text>
                   </View>
                   <View style={[styles.radio, isSelected && styles.radioSelected]}>
@@ -122,23 +111,22 @@ export default function ReadAloudScreen({ onDone }: Props) {
           })}
         </View>
 
-        {/* Done button */}
-        <TouchableOpacity
-          style={[styles.doneButton, !canContinue && styles.doneButtonDisabled]}
-          onPress={canContinue ? () => { Vibration.vibrate(60); onDone(); } : undefined}
-          accessibilityRole="button"
-          accessibilityLabel={canContinue ? "Finish setup and go to the home screen" : "Choose an option above to continue"}
-          accessibilityState={{ disabled: !canContinue }}
-          activeOpacity={canContinue ? 0.85 : 1}
-        >
-          <Text style={[styles.doneButtonText, { fontSize: sf(20) }]}>
-            {canContinue ? "Let's Go! 🐴" : 'Choose an option above'}
-          </Text>
-        </TouchableOpacity>
+        {/* Done button — only shown once user selects an option */}
+        {canContinue && (
+          <TouchableOpacity
+            style={styles.doneButton}
+            onPress={() => { Vibration.vibrate(60); onDone(); }}
+            accessibilityRole="button"
+            accessibilityLabel="Finish setup and go to the home screen"
+            activeOpacity={0.85}
+          >
+            <Text style={[styles.doneButtonText, { fontSize: sf(20) }]}>
+              Let's Go! 🐴
+            </Text>
+          </TouchableOpacity>
+        )}
 
-        <Text style={[styles.hint, { fontSize: sf(13) }]}>
-          All preferences can be changed later in Settings.
-        </Text>
+        {/* gu-023: "You can change this any time in Settings" hint removed */}
       </ScrollView>
     </SafeAreaView>
   );
@@ -151,26 +139,32 @@ const styles = StyleSheet.create({
   },
   container: {
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.xl,
+    paddingTop: Spacing.xxl,
     paddingBottom: Spacing.xxl,
   },
-  stepLabel: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    marginBottom: Spacing.sm,
-    letterSpacing: 0.5,
+  dotsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.xl,
+  },
+  dot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: Colors.border,
+  },
+  dotActive: {
+    backgroundColor: Colors.primary,
+    width: 28,
   },
   title: {
     fontWeight: '800',
     color: Colors.textPrimary,
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xl, // gu-023: increased — subtitle removed
     lineHeight: 40,
   },
-  subtitle: {
-    color: Colors.textSecondary,
-    marginBottom: Spacing.xl,
-    lineHeight: 24,
-  },
+  // subtitle removed — gu-023: no body text per UX feedback
   optionList: {
     gap: Spacing.sm,
     marginBottom: Spacing.xl,
@@ -187,15 +181,15 @@ const styles = StyleSheet.create({
   },
   optionButtonSelected: {
     borderColor: Colors.primary,
-    backgroundColor: '#EDF7F2',
+    backgroundColor: Colors.primary,  // Gold bg — black text = 8.6:1 ✅
   },
   optionRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  optionEmoji: {
-    fontSize: 30,
+  optionIcon: {
     marginRight: Spacing.md,
+    flexShrink: 0,
   },
   optionTextBlock: {
     flex: 1,
@@ -206,14 +200,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   optionLabelSelected: {
-    color: Colors.primary,
-  },
-  optionDescription: {
-    color: Colors.textSecondary,
-    lineHeight: 20,
-  },
-  optionDescriptionSelected: {
-    color: Colors.primary,
+    color: '#000000',  // Black on gold = 8.6:1 ✅
   },
   radio: {
     width: 26,
@@ -254,7 +241,7 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
   doneButtonText: {
-    color: '#fff',
+    color: '#000000',  // Black on gold = 8.6:1 ✅
     fontWeight: '800',
     letterSpacing: 0.3,
   },

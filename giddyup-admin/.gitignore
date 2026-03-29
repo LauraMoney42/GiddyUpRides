@@ -1,5 +1,23 @@
-node_modules/
-dist/
+# ── Secrets ───────────────────────────────────────────────────────────────────
 .env
-*.env.local
+.env.local
+.env.production
+.env.staging
+.env.development
+.env.*
+google-services.json
+GoogleService-Info.plist
+
+# ── Dependencies ──────────────────────────────────────────────────────────────
+node_modules/
+
+# ── Vite / build artifacts ────────────────────────────────────────────────────
+dist/
+dist-ssr/
+
+# ── macOS ─────────────────────────────────────────────────────────────────────
 .DS_Store
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+npm-debug.log*

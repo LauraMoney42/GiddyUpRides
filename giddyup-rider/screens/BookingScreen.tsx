@@ -13,7 +13,7 @@
 //   - Plain language, large text, no swipes
 //   - SOS button always visible
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -25,13 +25,44 @@ import {
   Vibration,
   Alert,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 import { Colors, FontSize, Radius, Spacing, TouchTarget } from '../constants/theme';
 import SOSButton from '../components/SOSButton';
+import { useAccessibility } from '../context/AccessibilityContext';
+import { Ionicons } from '@expo/vector-icons';
+// gu-034: Guarded import — static import crashes Expo Go (native module absent).
+// Module-level assignment is fixed at bundle time so hook call count never
+// changes between renders (rules of hooks satisfied).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let ExpoSpeechRecognitionModule: any = null;
+// No-op stands in for the hook when native module is unavailable.
+// Safe: assignment is determined once at module load, not per render.
+let useSpeechRecognitionEvent: (event: string, cb: (e: any) => void) => void =
+  (_event: string, _cb: (e: any) => void) => {};
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const _SR = require('expo-speech-recognition');
+  ExpoSpeechRecognitionModule  = _SR.ExpoSpeechRecognitionModule;
+  useSpeechRecognitionEvent    = _SR.useSpeechRecognitionEvent;
+} catch (_) {
+  // expo-speech-recognition native module not available in Expo Go —
+  // mic button will trigger mock demo behaviour instead of crashing.
+}
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type BookingStep = 'destination' | 'drivers' | 'confirm';
+
+// gu-016: Google Places Autocomplete prediction shape
+interface PlaceSuggestion {
+  place_id: string;
+  description: string;
+  structured_formatting: {
+    main_text: string;
+    secondary_text?: string;
+  };
+}
 
 interface MockDriver {
   id: string;
@@ -105,6 +136,9 @@ export default function BookingScreen({ onBack, onRideConfirmed, onSOS }: Bookin
   const [destination, setDestination] = useState('');
   const [selectedDriver, setDriver]   = useState<MockDriver | null>(null);
   const [searching, setSearching]     = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const { fontScale } = useAccessibility();
+  const sf = (base: number) => Math.round(base * fontScale);
 
   // ── Step handlers ────────────────────────────────────────────────────────
 
@@ -131,16 +165,7 @@ export default function BookingScreen({ onBack, onRideConfirmed, onSOS }: Bookin
   function handleConfirm() {
     if (!selectedDriver) return;
     Vibration.vibrate([0, 80, 60, 80]);
-    Alert.alert(
-      'Ride Confirmed! 🚗',
-      `${selectedDriver.name} is on their way.\nETA: ${selectedDriver.etaMinutes} min`,
-      [
-        {
-          text: 'OK',
-          onPress: () => onRideConfirmed?.(selectedDriver, destination),
-        },
-      ]
-    );
+    setShowConfirmModal(true);
   }
 
   function handleBack() {
@@ -207,6 +232,41 @@ export default function BookingScreen({ onBack, onRideConfirmed, onSOS }: Bookin
 
         {/* Always-visible SOS — gu-014: wired to SOSScreen */}
         <SOSButton onSOS={onSOS} />
+
+        {/* ── Ride Confirmed modal — respects fontScale ──────────────────── */}
+        <Modal
+          visible={showConfirmModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => {}}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalCard}>
+              <Text style={[styles.modalEmoji]}>🎉</Text>
+              <Text style={[styles.modalTitle, { fontSize: sf(26) }]}>
+                Ride Confirmed!
+              </Text>
+              <Text style={[styles.modalBody, { fontSize: sf(18) }]}>
+                {selectedDriver?.name} is on their way.
+              </Text>
+              <Text style={[styles.modalEta, { fontSize: sf(20) }]}>
+                Driver arrives in {selectedDriver?.etaMinutes} min 🚗
+              </Text>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={() => {
+                  setShowConfirmModal(false);
+                  if (selectedDriver) onRideConfirmed?.(selectedDriver, destination);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="OK, go to live ride screen"
+                activeOpacity={0.85}
+              >
+                <Text style={[styles.modalButtonText, { fontSize: sf(20) }]}>OK 👍</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </View>
     </SafeAreaView>
   );
@@ -243,6 +303,7 @@ function StepIndicator({ current }: { current: BookingStep }) {
 }
 
 // ── Step 1: Destination ───────────────────────────────────────────────────────
+// gu-016: Google Places autocomplete + voice (expo-speech-recognition)
 
 function DestinationStep({
   destination,
@@ -255,6 +316,149 @@ function DestinationStep({
   onConfirm: () => void;
   searching: boolean;
 }) {
+  const { fontScale } = useAccessibility();
+  const sf = (base: number) => Math.round(base * fontScale);
+
+  // ── Autocomplete state ─────────────────────────────────────────────────
+  const [suggestions, setSuggestions]           = useState<PlaceSuggestion[]>([]);
+  const [showDropdown, setShowDropdown]         = useState(false);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ── Voice state ────────────────────────────────────────────────────────
+  const [isListening, setIsListening] = useState(false);
+  const [voiceInterim, setVoiceInterim] = useState('');
+
+  // ── Speech recognition events (top-level hook — always called) ─────────
+  useSpeechRecognitionEvent('result', (e) => {
+    const transcript = e.results[0]?.transcript ?? '';
+    if (e.isFinal) {
+      onChangeDestination(transcript);
+      setVoiceInterim('');
+      setIsListening(false);
+      // Kick off autocomplete for the spoken text
+      if (transcript.trim().length >= 3) fetchSuggestions(transcript);
+    } else {
+      setVoiceInterim(transcript);
+    }
+  });
+
+  useSpeechRecognitionEvent('end', () => {
+    setIsListening(false);
+    setVoiceInterim('');
+  });
+
+  useSpeechRecognitionEvent('error', (e) => {
+    setIsListening(false);
+    setVoiceInterim('');
+    if (e.error !== 'aborted') {
+      Alert.alert(
+        'Voice input problem',
+        "Couldn't hear that. Please try again or type your destination.",
+        [{ text: 'OK' }]
+      );
+    }
+  });
+
+  // ── Autocomplete ───────────────────────────────────────────────────────
+  const fetchSuggestions = async (query: string) => {
+    if (query.trim().length < 3) {
+      setSuggestions([]);
+      setShowDropdown(false);
+      return;
+    }
+    setLoadingSuggestions(true);
+    try {
+      const key = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ?? '';
+      const url =
+        `https://maps.googleapis.com/maps/api/place/autocomplete/json` +
+        `?input=${encodeURIComponent(query)}&key=${key}&language=en`;
+      const res = await fetch(url);
+      const data: { predictions?: PlaceSuggestion[] } = await res.json();
+      if (data.predictions?.length) {
+        setSuggestions(data.predictions.slice(0, 5)); // cap at 5 results
+        setShowDropdown(true);
+      } else {
+        setSuggestions([]);
+        setShowDropdown(false);
+      }
+    } catch {
+      setSuggestions([]);
+      setShowDropdown(false);
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  };
+
+  const handleTextChange = (text: string) => {
+    onChangeDestination(text);
+    if (!text.trim()) {
+      setSuggestions([]);
+      setShowDropdown(false);
+      return;
+    }
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => fetchSuggestions(text), 400);
+  };
+
+  const handleSuggestionSelect = (pred: PlaceSuggestion) => {
+    Vibration.vibrate(30);
+    onChangeDestination(pred.description);
+    setSuggestions([]);
+    setShowDropdown(false);
+  };
+
+  // ── Voice ──────────────────────────────────────────────────────────────
+  const handleMicPress = async () => {
+    // gu-034: Native module unavailable in Expo Go — show mock demo instead
+    if (!ExpoSpeechRecognitionModule) {
+      const mockDestinations = [
+        'Sunview Medical Center',
+        'Green Valley Grocery',
+        'Riverside Community Center',
+        'Downtown Transit Hub',
+      ];
+      const mockDest = mockDestinations[Math.floor(Math.random() * mockDestinations.length)];
+      Vibration.vibrate(40);
+      setIsListening(true);
+      setVoiceInterim('Listening…');
+      setTimeout(() => {
+        setVoiceInterim(mockDest);
+        setTimeout(() => {
+          setIsListening(false);
+          setVoiceInterim('');
+          onChangeDestination(mockDest);
+        }, 600);
+      }, 1800);
+      return;
+    }
+
+    if (isListening) {
+      ExpoSpeechRecognitionModule.stop();
+      setIsListening(false);
+      return;
+    }
+    try {
+      const { granted } = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+      if (!granted) {
+        Alert.alert(
+          'Microphone Permission Needed',
+          'Please allow microphone access in Settings to use voice input.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+      Vibration.vibrate(40);
+      setIsListening(true);
+      setVoiceInterim('');
+      ExpoSpeechRecognitionModule.start({ lang: 'en-US', interimResults: true });
+    } catch {
+      setIsListening(false);
+      Alert.alert('Voice input unavailable', 'Please type your destination instead.');
+    }
+  };
+
+  // ── Render ─────────────────────────────────────────────────────────────
   return (
     <ScrollView
       style={styles.stepScroll}
@@ -262,21 +466,90 @@ function DestinationStep({
       keyboardShouldPersistTaps="handled"
     >
       <Text style={styles.stepHeading}>Where are you going?</Text>
-      <Text style={styles.stepSubheading}>Type an address or tap a common destination below.</Text>
+      <Text style={styles.stepSubheading}>Type an address, speak it, or tap a common destination below.</Text>
 
-      {/* Address text input */}
-      <TextInput
-        style={styles.addressInput}
-        value={destination}
-        onChangeText={onChangeDestination}
-        placeholder="Enter address or place name…"
-        placeholderTextColor={Colors.textSecondary}
-        autoCorrect={false}
-        returnKeyType="search"
-        onSubmitEditing={onConfirm}
-        accessibilityLabel="Destination address"
-        accessibilityHint="Type where you want to go"
-      />
+      {/* Address input row + mic button side by side */}
+      <View style={styles.inputRow}>
+        <TextInput
+          style={[styles.addressInput, isListening && styles.addressInputListening]}
+          value={isListening ? (voiceInterim || '🎤 Listening…') : destination}
+          onChangeText={handleTextChange}
+          placeholder="Enter address or place name…"
+          placeholderTextColor={Colors.textSecondary}
+          autoCorrect={false}
+          returnKeyType="search"
+          onSubmitEditing={() => { setShowDropdown(false); onConfirm(); }}
+          onFocus={() => {
+            if (destination.trim().length >= 3) fetchSuggestions(destination);
+          }}
+          onBlur={() => {
+            // Small delay so tapping a suggestion registers before dropdown hides
+            setTimeout(() => setShowDropdown(false), 250);
+          }}
+          editable={!isListening}
+          accessibilityLabel="Destination address"
+          accessibilityHint="Type where you want to go, or tap the microphone to speak"
+        />
+
+        {/* Mic button */}
+        <TouchableOpacity
+          style={[styles.micButton, isListening && styles.micButtonActive]}
+          onPress={handleMicPress}
+          activeOpacity={0.75}
+          accessibilityRole="button"
+          accessibilityLabel={isListening ? 'Stop voice input' : 'Speak your destination'}
+          accessibilityHint={isListening ? 'Tap to stop listening' : 'Tap and speak your destination address'}
+        >
+          <Ionicons
+            name={isListening ? 'mic' : 'mic-outline'}
+            size={sf(24)}
+            color={isListening ? '#fff' : Colors.primary}
+          />
+        </TouchableOpacity>
+      </View>
+
+      {/* Autocomplete dropdown */}
+      {showDropdown && suggestions.length > 0 && (
+        <View style={styles.dropdownCard}>
+          {suggestions.map((pred, idx) => (
+            <TouchableOpacity
+              key={pred.place_id}
+              style={[
+                styles.suggestionRow,
+                idx === suggestions.length - 1 && styles.suggestionRowLast,
+              ]}
+              onPress={() => handleSuggestionSelect(pred)}
+              accessibilityRole="button"
+              accessibilityLabel={pred.description}
+              activeOpacity={0.7}
+            >
+              <Text
+                style={[styles.suggestionMain, { fontSize: sf(FontSize.sm) }]}
+                numberOfLines={1}
+              >
+                {pred.structured_formatting.main_text}
+              </Text>
+              {!!pred.structured_formatting.secondary_text && (
+                <Text
+                  style={[styles.suggestionSub, { fontSize: sf(14) }]}
+                  numberOfLines={1}
+                >
+                  {pred.structured_formatting.secondary_text}
+                </Text>
+              )}
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+
+      {/* Subtle loading indicator while fetching */}
+      {loadingSuggestions && !showDropdown && (
+        <ActivityIndicator
+          color={Colors.primary}
+          size="small"
+          style={{ marginBottom: Spacing.sm, alignSelf: 'flex-start' }}
+        />
+      )}
 
       {/* Quick-tap presets */}
       <Text style={styles.presetsLabel}>Common Destinations</Text>
@@ -287,6 +560,8 @@ function DestinationStep({
           onPress={() => {
             Vibration.vibrate(30);
             onChangeDestination(preset.address);
+            setSuggestions([]);
+            setShowDropdown(false);
           }}
           accessibilityLabel={preset.label.replace(/[^a-zA-Z ]/g, '').trim()}
           accessibilityHint={`Sets destination to ${preset.address}`}
@@ -300,7 +575,7 @@ function DestinationStep({
       {/* Find drivers button */}
       <TouchableOpacity
         style={[styles.primaryButton, searching && styles.primaryButtonDisabled]}
-        onPress={onConfirm}
+        onPress={() => { setShowDropdown(false); onConfirm(); }}
         disabled={searching}
         accessibilityLabel="Find drivers"
         accessibilityHint="Searches for available drivers near you"
@@ -356,6 +631,8 @@ function DriverCard({
   driver: MockDriver;
   onSelect: (d: MockDriver) => void;
 }) {
+  const { fontScale } = useAccessibility();
+  const sf = (base: number) => Math.round(base * fontScale);
   const stars = '★'.repeat(Math.round(driver.rating)) + '☆'.repeat(5 - Math.round(driver.rating));
 
   return (
@@ -374,9 +651,15 @@ function DriverCard({
           <Text style={styles.driverPlate}>Plate: {driver.plate}</Text>
         </View>
         <View style={styles.driverEtaBlock}>
-          <Text style={styles.driverEtaNumber}>{driver.etaMinutes}</Text>
-          <Text style={styles.driverEtaUnit}>min</Text>
-          <Text style={styles.driverFare}>{driver.fare}</Text>
+          <Text
+            style={styles.driverEtaNumber}
+            adjustsFontSizeToFit
+            numberOfLines={1}
+          >
+            {driver.etaMinutes}
+          </Text>
+          <Text style={[styles.driverEtaUnit, { fontSize: sf(FontSize.xs) }]}>min</Text>
+          <Text style={[styles.driverFare, { fontSize: sf(FontSize.sm) }]}>{driver.fare}</Text>
         </View>
       </View>
 
@@ -407,6 +690,10 @@ function ConfirmStep({
   onConfirm: () => void;
   onChangeDriver: () => void;
 }) {
+  // gu-029: Read mobility profile — show notice if rider has any needs
+  const { prefs } = useAccessibility();
+  const hasMobilityNeeds = prefs.mobilityNeeds.length > 0 || prefs.mobilityNotes.trim().length > 0;
+
   const stars = '★'.repeat(Math.round(driver.rating)) + '☆'.repeat(5 - Math.round(driver.rating));
 
   return (
@@ -417,9 +704,10 @@ function ConfirmStep({
       <View style={styles.summaryCard}>
         <SummaryRow icon="📍" label="Going to" value={destination} />
         <View style={styles.summaryDivider} />
-        <SummaryRow icon="🚗" label="Driver" value={driver.name} />
-        <SummaryRow icon="⏱" label="ETA"    value={`${driver.etaMinutes} minutes`} />
-        <SummaryRow icon="💰" label="Fare"   value={driver.fare} />
+        <SummaryRow icon="🚗" label="Driver"           value={driver.name} />
+        <SummaryRow icon="⏱" label="Driver arrives in" value={`${driver.etaMinutes} min`} />
+        <SummaryRow icon="🛣️" label="Trip time"        value="~18 min" />
+        <SummaryRow icon="💰" label="Fare"             value={driver.fare} />
         <SummaryRow icon="🚙" label="Car"    value={driver.vehicle} />
         <SummaryRow icon="🔢" label="Plate"  value={driver.plate} />
         <View style={styles.summaryDivider} />
@@ -430,6 +718,15 @@ function ConfirmStep({
           </Text>
         </View>
       </View>
+
+      {/* gu-029: Accessibility notice — only shown if rider has mobility needs */}
+      {hasMobilityNeeds && (
+        <View style={styles.accessibilityNote}>
+          <Text style={styles.accessibilityNoteText}>
+            ♿  Your driver will be notified of your accessibility needs before pickup.
+          </Text>
+        </View>
+      )}
 
       <Text style={styles.confirmNote}>
         Your driver will call if they have trouble finding you. Make sure your phone is nearby.
@@ -542,10 +839,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   stepNumberActive: {
-    color: '#FFFFFF',
+    color: '#000000',  // Black on gold step dot = 8.6:1 ✅
   },
   stepLabel: {
-    fontSize: 13,
+    fontSize: FontSize.xs,
     color: Colors.textSecondary,
     fontWeight: '500',
   },
@@ -589,17 +886,75 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
 
-  // Destination step
+  // Destination step — gu-016: input row, mic, autocomplete dropdown
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.sm,
+  },
   addressInput: {
+    flex: 1,
     backgroundColor: Colors.surface,
     borderWidth: 2,
     borderColor: Colors.primary,
     borderRadius: Radius.md,
-    padding: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
     fontSize: FontSize.base,
     color: Colors.textPrimary,
-    marginBottom: Spacing.lg,
     minHeight: TouchTarget.min,
+  },
+  addressInputListening: {
+    borderColor: Colors.sos,
+    color: Colors.sos,
+  },
+  micButton: {
+    width: TouchTarget.min,
+    height: TouchTarget.min,
+    borderRadius: Radius.md,
+    borderWidth: 2,
+    borderColor: Colors.primary,
+    backgroundColor: Colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  micButtonActive: {
+    backgroundColor: Colors.sos,
+    borderColor: Colors.sos,
+  },
+  dropdownCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.md,
+    borderWidth: 1.5,
+    borderColor: Colors.primary,
+    marginBottom: Spacing.md,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  suggestionRow: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+    minHeight: TouchTarget.min,
+    justifyContent: 'center',
+  },
+  suggestionRowLast: {
+    borderBottomWidth: 0,
+  },
+  suggestionMain: {
+    color: Colors.textPrimary,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  suggestionSub: {
+    color: Colors.textSecondary,
   },
   presetsLabel: {
     fontSize: FontSize.sm,
@@ -648,7 +1003,7 @@ const styles = StyleSheet.create({
   },
   primaryButtonText: {
     fontSize: FontSize.lg,
-    color: '#FFFFFF',
+    color: '#000000',  // Black on gold = 8.6:1 ✅
     fontWeight: '900',
   },
   searchingRow: {
@@ -686,7 +1041,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   driverAvatarEmoji: {
-    fontSize: 32,
+    fontSize: FontSize.xl,
   },
   driverInfo: {
     flex: 1,
@@ -740,7 +1095,7 @@ const styles = StyleSheet.create({
   },
   selectButtonText: {
     fontSize: FontSize.base,
-    color: '#FFFFFF',
+    color: '#000000',  // Black on gold = 8.6:1 ✅
     fontWeight: '800',
   },
 
@@ -760,7 +1115,7 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   summaryIcon: {
-    fontSize: 22,
+    fontSize: FontSize.base,
     width: 32,
     textAlign: 'center',
   },
@@ -792,6 +1147,21 @@ const styles = StyleSheet.create({
     color: Colors.accent,
     fontWeight: '700',
   },
+  // gu-029: Accessibility notice on confirm step
+  accessibilityNote: {
+    backgroundColor: Colors.surface,   // Navy surface + gold border ✅
+    borderRadius: Radius.md,
+    padding: Spacing.md,
+    borderWidth: 1.5,
+    borderColor: Colors.primary,
+    marginBottom: Spacing.md,
+  },
+  accessibilityNoteText: {
+    fontSize: FontSize.sm,
+    color: Colors.textPrimary,          // White on navy = 15:1 ✅
+    fontWeight: '600',
+    lineHeight: 24,
+  },
   confirmNote: {
     fontSize: FontSize.sm,
     color: Colors.textSecondary,
@@ -804,8 +1174,12 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
     borderRadius: Radius.full,
     paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
+    alignSelf: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
     minHeight: TouchTarget.xl,
+    minWidth: 220,
     marginBottom: Spacing.md,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -815,7 +1189,7 @@ const styles = StyleSheet.create({
   },
   confirmButtonText: {
     fontSize: FontSize.lg,
-    color: '#FFFFFF',
+    color: '#000000',  // Black on gold = 8.6:1 ✅
     fontWeight: '900',
   },
   changeDriverButton: {
@@ -828,5 +1202,62 @@ const styles = StyleSheet.create({
     color: Colors.primary,
     fontWeight: '700',
     textDecorationLine: 'underline',
+  },
+
+  // ── Ride Confirmed modal ──────────────────────────────────────────────────
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.xl,
+  },
+  modalCard: {
+    backgroundColor: '#fff',
+    borderRadius: Radius.lg,
+    padding: Spacing.xl,
+    width: '100%',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 12,
+  },
+  modalEmoji: {
+    fontSize: FontSize.hero, // decorative modal emoji — intentionally large
+    marginBottom: Spacing.sm,
+  },
+  modalTitle: {
+    fontWeight: '900',
+    color: Colors.textPrimary,
+    textAlign: 'center',
+    marginBottom: Spacing.sm,
+  },
+  modalBody: {
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: Spacing.xs,
+    lineHeight: 26,
+  },
+  modalEta: {
+    fontWeight: '800',
+    color: Colors.primary,
+    textAlign: 'center',
+    marginBottom: Spacing.xl,
+  },
+  modalButton: {
+    backgroundColor: Colors.primary,
+    borderRadius: Radius.full,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xxl,
+    minHeight: TouchTarget.xl,
+    minWidth: 160,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalButtonText: {
+    color: '#000000', // Black on gold — WCAG AAA contrast
+    fontWeight: '900',
   },
 });

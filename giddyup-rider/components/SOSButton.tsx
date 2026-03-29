@@ -75,7 +75,7 @@ export default function SOSButton({ onSOS }: SOSButtonProps) {
           <View style={styles.dialog}>
             <Text style={styles.dialogTitle}>🚨 Call for Help?</Text>
             <Text style={styles.dialogBody}>
-              This will alert emergency services and your caregiver right away.
+              It will call 911, notify your emergency contact, and alert Giddy-Up support — all in one tap.
             </Text>
 
             <TouchableOpacity

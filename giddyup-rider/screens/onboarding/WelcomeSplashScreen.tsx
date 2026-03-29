@@ -12,16 +12,21 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
+  ScrollView,
   Animated,
   Vibration,
 } from 'react-native';
 import { Colors, Spacing, Radius, TouchTarget, FontSize } from '../../constants/theme';
+import { useAccessibility } from '../../context/AccessibilityContext';
 
 interface Props {
   onGetStarted: () => void;
 }
 
 export default function WelcomeSplashScreen({ onGetStarted }: Props) {
+  const { fontScale } = useAccessibility();
+  const sf = (base: number) => Math.round(base * fontScale);
+
   // Fade-in animation on mount — gentle, honors Reduce Motion via native layer
   const fadeAnim   = useRef(new Animated.Value(0)).current;
   const slideAnim  = useRef(new Animated.Value(24)).current;
@@ -40,31 +45,35 @@ export default function WelcomeSplashScreen({ onGetStarted }: Props) {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        bounces={false}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Western logo area */}
         <Animated.View
           style={[styles.logoArea, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}
           accessibilityLabel="Giddy-Up Rides logo"
         >
           {/* Horse emoji stands in for the real western logo asset */}
-          <Text style={styles.horseEmoji}>🐴</Text>
-          <Text style={styles.brandName}>GIDDY-UP</Text>
-          <Text style={styles.brandSub}>RIDES</Text>
+          <Text style={[styles.horseEmoji, { fontSize: sf(60) }]}>🐴</Text>
+          <Text style={[styles.brandName, { fontSize: sf(FontSize.hero) }]}>GIDDY-UP</Text>
+          <Text style={[styles.brandSub, { fontSize: sf(FontSize.xl) }]}>RIDES</Text>
           {/* Decorative western divider */}
           <View style={styles.dividerRow}>
             <View style={styles.dividerLine} />
             <Text style={styles.dividerStar}>✦</Text>
             <View style={styles.dividerLine} />
           </View>
-          <Text style={styles.tagline}>Saddle Up!</Text>
+          <Text style={[styles.tagline, { fontSize: sf(FontSize.xl) }]}>Saddle Up!</Text>
         </Animated.View>
 
         {/* Warm welcome copy */}
         <Animated.View style={[styles.copyArea, { opacity: fadeAnim }]}>
-          <Text style={styles.headline}>
+          <Text style={[styles.headline, { fontSize: sf(FontSize.xxl), lineHeight: sf(FontSize.xxl) * 1.3 }]}>
             Your ride,{'\n'}your way.
           </Text>
-          <Text style={styles.body}>
+          <Text style={[styles.body, { fontSize: sf(FontSize.base), lineHeight: sf(FontSize.base) * 1.55 }]}>
             Easy, reliable rides for when you need them most.
             Book in seconds. We'll take care of the rest.
           </Text>
@@ -80,7 +89,7 @@ export default function WelcomeSplashScreen({ onGetStarted }: Props) {
             accessibilityHint="Begin setting up your Giddy-Up Rides account"
             activeOpacity={0.85}
           >
-            <Text style={styles.getStartedText}>Get Started  →</Text>
+            <Text style={[styles.getStartedText, { fontSize: sf(FontSize.base) }]}>Get Started  →</Text>
           </TouchableOpacity>
 
           <Text style={styles.alreadyHave}>
@@ -88,7 +97,7 @@ export default function WelcomeSplashScreen({ onGetStarted }: Props) {
             <Text style={styles.signInLink}>Sign In</Text>
           </Text>
         </Animated.View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -96,10 +105,10 @@ export default function WelcomeSplashScreen({ onGetStarted }: Props) {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: '#1B4332', // Deep western green on splash only
+    backgroundColor: Colors.background, // gu-020: Deep Navy splash background
   },
   container: {
-    flex: 1,
+    flexGrow: 1,
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.xxl,
     paddingBottom: Spacing.xl,
@@ -112,19 +121,19 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.xl,
   },
   horseEmoji: {
-    fontSize: 80,
+    fontSize: FontSize.hero, // intentionally large — splash screen brand hero element
     marginBottom: Spacing.md,
   },
   brandName: {
-    fontSize: 42,
+    fontSize: FontSize.xxl,
     fontWeight: '900',
-    color: '#F4A261',     // Warm amber — brand accent on dark bg
+    color: Colors.primary,        // Gold — brand accent on dark navy bg ✅
     letterSpacing: 6,
   },
   brandSub: {
-    fontSize: 22,
+    fontSize: FontSize.base,
     fontWeight: '700',
-    color: 'rgba(244,162,97,0.75)',
+    color: 'rgba(200,150,62,0.80)',  // Gold at 80% opacity on navy ✅
     letterSpacing: 10,
     marginTop: -4,
   },
@@ -137,11 +146,11 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: 'rgba(244,162,97,0.35)',
+    backgroundColor: 'rgba(200,150,62,0.35)',  // Gold divider line
   },
   dividerStar: {
-    color: '#F4A261',
-    fontSize: 16,
+    color: Colors.primary,
+    fontSize: FontSize.xs,
     marginHorizontal: Spacing.sm,
   },
   tagline: {
@@ -177,7 +186,7 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   getStartedButton: {
-    backgroundColor: '#F4A261',
+    backgroundColor: Colors.primary,  // Gold — black text = 8.6:1 ✅
     borderRadius: Radius.lg,
     alignItems: 'center',
     justifyContent: 'center',
@@ -189,7 +198,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   getStartedText: {
-    color: '#1B4332',
+    color: '#000000', // solid black for maximum readability on gold button
     fontSize: FontSize.lg,
     fontWeight: '900',
     letterSpacing: 0.5,
@@ -200,7 +209,7 @@ const styles = StyleSheet.create({
     fontSize: FontSize.xs,
   },
   signInLink: {
-    color: '#F4A261',
+    color: Colors.primary,
     fontWeight: '700',
   },
 });
