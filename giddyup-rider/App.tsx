@@ -1,44 +1,60 @@
-// GiddyUp Rides — Rider App
-// Entry point. Uses simple state-based navigation so each screen
-// can be developed independently before react-navigation is wired in.
-//
-// Screen flow:
-//   welcome (gu-003, Dev3) → home (gu-004, Dev4) → booking (gu-005)
+/**
+ * App.tsx — Giddy-Up Rider
+ * Screen flow:
+ *   textSize  → gu-003 (Dev3) TextSizeScreen  — choose Normal / Large / XL
+ *   readAloud → gu-003 (Dev3) ReadAloudScreen  — TTS preference
+ *   home      → gu-004 (Dev4) HomeScreen       — main home screen
+ *   booking   → gu-005       BookingScreen     — book a ride (upcoming)
+ */
 
 import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { AccessibilityProvider } from './context/AccessibilityContext';
+import TextSizeScreen from './screens/welcome/TextSizeScreen';
+import ReadAloudScreen from './screens/welcome/ReadAloudScreen';
 import HomeScreen from './screens/HomeScreen';
+import BookingScreen from './screens/BookingScreen';
 import { Colors } from './constants/theme';
 
-type Screen = 'welcome' | 'home' | 'booking';
+type Screen = 'textSize' | 'readAloud' | 'home' | 'booking';
 
 export default function App() {
-  // TODO (gu-003): replace with actual onboarding check from AsyncStorage/Firebase
-  // For now, skip straight to home so home screen is testable.
-  const [screen, setScreen] = useState<Screen>('home');
+  // gu-003: Start at welcome flow. After onboarding, AsyncStorage will skip to 'home'.
+  const [screen, setScreen] = useState<Screen>('textSize');
 
   return (
-    <View style={styles.root}>
-      <StatusBar style="dark" />
+    <AccessibilityProvider>
+      <View style={styles.root}>
+        <StatusBar style="dark" />
 
-      {screen === 'home' && (
-        <HomeScreen
-          userName="Dorothy"
-          onBookRide={() => setScreen('booking')}
-        />
-      )}
+        {/* gu-003: Welcome flow — text size picker */}
+        {screen === 'textSize' && (
+          <TextSizeScreen onNext={() => setScreen('readAloud')} />
+        )}
 
-      {/* TODO (gu-003): WelcomeScreen rendered here for first-launch */}
-      {/* {screen === 'welcome' && (
-        <WelcomeScreen onComplete={() => setScreen('home')} />
-      )} */}
+        {/* gu-003: Welcome flow — read-aloud preference */}
+        {screen === 'readAloud' && (
+          <ReadAloudScreen onDone={() => setScreen('home')} />
+        )}
 
-      {/* TODO (gu-005): BookingScreen rendered here */}
-      {/* {screen === 'booking' && (
-        <BookingScreen onBack={() => setScreen('home')} />
-      )} */}
-    </View>
+        {/* gu-004 (Dev4): Main home screen */}
+        {screen === 'home' && (
+          <HomeScreen
+            userName="Dorothy"
+            onBookRide={() => setScreen('booking')}
+          />
+        )}
+
+        {/* gu-005: BookingScreen — destination → driver pick → confirm */}
+        {screen === 'booking' && (
+          <BookingScreen
+            onBack={() => setScreen('home')}
+            onRideConfirmed={() => setScreen('home')}
+          />
+        )}
+      </View>
+    </AccessibilityProvider>
   );
 }
 
