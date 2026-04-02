@@ -553,7 +553,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(0,102,255,0.12)',
+    backgroundColor: 'rgba(0,240,255,0.12)',
     borderRadius: Radius.full,
     paddingHorizontal: Spacing.lg,
     marginTop: Spacing.md,

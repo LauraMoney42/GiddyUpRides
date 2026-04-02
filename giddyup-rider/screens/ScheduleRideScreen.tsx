@@ -873,7 +873,7 @@ const styles = StyleSheet.create({
 
   // gu-029: Accessibility notice banner (matches BookingScreen pattern)
   accessibilityNote: {
-    backgroundColor: 'rgba(0,102,255,0.15)',
+    backgroundColor: 'rgba(0,240,255,0.15)',
     borderRadius: Radius.md,
     borderLeftWidth: 3,
     borderLeftColor: Colors.primary,

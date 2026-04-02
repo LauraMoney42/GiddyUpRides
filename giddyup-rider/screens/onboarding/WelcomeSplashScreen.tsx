@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: 'rgba(0,102,255,0.25)',  // Gold divider line
+    backgroundColor: 'rgba(0,240,255,0.25)',  // Electric blue divider line (gu-078)
   },
   dividerStar: {
     color: Colors.primary,

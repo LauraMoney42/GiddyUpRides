@@ -248,8 +248,8 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: Radius.md,
     borderWidth: 1.5,
-    borderColor: 'rgba(0,102,255,0.25)',   // subtle gold border
-    backgroundColor: '#111111',              // Colors.surface — dark card
+    borderColor: 'rgba(0,240,255,0.25)',   // subtle electric blue border (gu-078)
+    backgroundColor: '#1A1A1A',              // Colors.surface — dark card (gu-078)
     padding: Spacing.lg,
     marginBottom: Spacing.md,
   },
