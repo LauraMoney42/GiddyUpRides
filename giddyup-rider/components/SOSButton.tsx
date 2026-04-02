@@ -89,8 +89,8 @@ export default function SOSButton({ onPress, onSOS }: SOSButtonProps) {
       >
         <View style={styles.overlay}>
           <View style={styles.dialog}>
-            <Text style={styles.dialogTitle}>🚨 Call for Help?</Text>
-            <Text style={styles.dialogBody}>
+            <Text style={[styles.dialogTitle, { fontSize: sf(FontSize.xl) }]}>🚨 Call for Help?</Text>
+            <Text style={[styles.dialogBody, { fontSize: sf(FontSize.base), lineHeight: sf(FontSize.base) * 1.5 }]}>
               It will call 911, notify your emergency contact, and alert Giddy-Up support — all in one tap.
             </Text>
 
@@ -100,7 +100,7 @@ export default function SOSButton({ onPress, onSOS }: SOSButtonProps) {
               accessibilityLabel="Yes, call for help now"
               accessibilityRole="button"
             >
-              <Text style={styles.confirmText}>Yes — Call for Help</Text>
+              <Text style={[styles.confirmText, { fontSize: sf(FontSize.base) }]}>Yes — Call for Help</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -109,7 +109,7 @@ export default function SOSButton({ onPress, onSOS }: SOSButtonProps) {
               accessibilityLabel="No, I am okay. Cancel."
               accessibilityRole="button"
             >
-              <Text style={styles.cancelText}>I'm Okay — Cancel</Text>
+              <Text style={[styles.cancelText, { fontSize: sf(FontSize.base) }]}>I'm Okay — Cancel</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -137,7 +137,6 @@ const styles = StyleSheet.create({
   },
   sosText: {
     color: '#FFFFFF',
-    fontSize: 14,
     fontWeight: '900',
     letterSpacing: 1,
   },
@@ -158,16 +157,13 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   dialogTitle: {
-    fontSize: FontSize.xl,
     fontWeight: '800',
     color: Colors.sos,
     textAlign: 'center',
   },
   dialogBody: {
-    fontSize: FontSize.base,
     color: Colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 30,
     marginBottom: Spacing.sm,
   },
   confirmButton: {
@@ -181,7 +177,6 @@ const styles = StyleSheet.create({
   },
   confirmText: {
     color: '#FFFFFF',
-    fontSize: FontSize.base,
     fontWeight: '800',
   },
   cancelButton: {
@@ -197,7 +192,6 @@ const styles = StyleSheet.create({
   },
   cancelText: {
     color: Colors.textSecondary,
-    fontSize: FontSize.base,
     fontWeight: '700',
   },
 });
