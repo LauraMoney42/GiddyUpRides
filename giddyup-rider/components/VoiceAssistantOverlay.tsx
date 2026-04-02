@@ -567,14 +567,14 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: '#0D1A1B', // dark teal-black — resting state (gu-078)
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 3,
     borderColor: Colors.border,
   },
   micCircleActive: {
-    backgroundColor: '#C8E6C9',
+    backgroundColor: '#0E2425', // deeper teal — listening state (gu-078)
     borderColor: Colors.primary,
     borderWidth: 3,
   },
@@ -583,7 +583,7 @@ const styles = StyleSheet.create({
 
   // Transcript
   transcriptBox: {
-    backgroundColor: '#F8F9FA',
+    backgroundColor: Colors.surface,
     borderRadius: Radius.md,
     padding: Spacing.md,
     gap: 6,
