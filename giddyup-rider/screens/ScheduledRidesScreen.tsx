@@ -93,7 +93,7 @@ export default function ScheduledRidesScreen({
           {rides.length === 0 ? (
             /* Empty state */
             <View style={styles.emptyState}>
-              <Text style={styles.emptyEmoji}>🗓</Text>
+              <Text style={[styles.emptyEmoji, { fontSize: sf(FontSize.hero) }]}>🗓</Text>
               <Text style={[styles.emptyTitle, { fontSize: sf(FontSize.lg) }]}>
                 No upcoming rides
               </Text>
@@ -172,7 +172,7 @@ function RideRow({
       {/* Top section: date/time + destination (full width — no competition with cancel) */}
       <View style={styles.rideLeft}>
         <View style={styles.dateBlock}>
-          <Text style={styles.calEmoji}>🗓</Text>
+          <Text style={[styles.calEmoji, { fontSize: sf(FontSize.base) }]}>🗓</Text>
           <View>
             <Text style={[styles.rideDate, { fontSize: sf(FontSize.sm) }]}>
               {ride.date}
@@ -183,7 +183,7 @@ function RideRow({
           </View>
         </View>
         <View style={styles.destBlock}>
-          <Text style={styles.destPin}>📍</Text>
+          <Text style={[styles.destPin, { fontSize: sf(FontSize.xs) }]}>📍</Text>
           <Text
             style={[styles.rideDest, { fontSize: sf(FontSize.sm) }]}
             numberOfLines={2}
@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.sm,
   },
-  calEmoji: { fontSize: FontSize.base },
+  calEmoji: {},
   rideDate: { color: Colors.textSecondary, fontWeight: '500' },
   rideTime: { color: Colors.textPrimary,   fontWeight: '800' },
   destBlock: {
@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: Spacing.xs,
   },
-  destPin: { fontSize: FontSize.xs, marginTop: 2 },
+  destPin: { marginTop: 2 },
   rideDest: { color: Colors.textPrimary, fontWeight: '600', flex: 1 },
 
   // Cancel button row — right-aligned below ride details, never floats next to time text
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xxl,
     gap: Spacing.md,
   },
-  emptyEmoji: { fontSize: FontSize.hero, marginBottom: Spacing.sm }, // decorative — hero is max enum value
+  emptyEmoji: { marginBottom: Spacing.sm },
   emptyTitle: { fontWeight: '800', color: Colors.textPrimary },
   emptyBody: {
     color: Colors.textSecondary,
