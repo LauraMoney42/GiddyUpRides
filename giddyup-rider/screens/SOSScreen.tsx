@@ -159,7 +159,7 @@ export default function SOSScreen({
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
       >
-        <Text style={styles.sosIconText}>SOS</Text>
+        <Text style={[styles.sosIconText, { fontSize: sf(FontSize.sm) }]}>SOS</Text>
       </View>
 
       {/* ── PHASE 1: Countdown ─────────────────────────────────────────── */}
@@ -187,7 +187,7 @@ export default function SOSScreen({
             accessibilityLabel={`${secondsLeft} seconds until alert is sent`}
           >
             <Text
-              style={styles.countdownNumber}
+              style={[styles.countdownNumber, { fontSize: sf(FontSize.hero) }]}
               adjustsFontSizeToFit
               numberOfLines={1}
             >
@@ -247,7 +247,7 @@ export default function SOSScreen({
         >
           {/* Big confirmed check */}
           <View style={styles.confirmedCircle}>
-            <Text style={styles.confirmedCheck}>✓</Text>
+            <Text style={[styles.confirmedCheck, { fontSize: sf(FontSize.xxl) }]}>✓</Text>
           </View>
 
           <Text
@@ -264,7 +264,7 @@ export default function SOSScreen({
 
           {/* Contacts notified */}
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>CONTACTS NOTIFIED</Text>
+            <Text style={[styles.sectionLabel, { fontSize: sf(FontSize.xs) }]}>CONTACTS NOTIFIED</Text>
 
             {displayContacts.map(contact => (
               <TouchableOpacity
@@ -277,16 +277,16 @@ export default function SOSScreen({
                 accessibilityHint={`Tap to call ${contact.name} directly`}
               >
                 <View style={styles.contactAvatar}>
-                  <Text style={styles.contactInitial}>
+                  <Text style={[styles.contactInitial, { fontSize: sf(FontSize.base) }]}>
                     {contact.name.charAt(0)}
                   </Text>
                 </View>
                 <View style={styles.contactInfo}>
-                  <Text style={styles.contactName}>{contact.name}</Text>
-                  <Text style={styles.contactRole}>{contact.role}</Text>
+                  <Text style={[styles.contactName, { fontSize: sf(FontSize.sm) }]}>{contact.name}</Text>
+                  <Text style={[styles.contactRole, { fontSize: sf(FontSize.xs) }]}>{contact.role}</Text>
                 </View>
                 <View style={styles.notifiedBadge}>
-                  <Text style={styles.notifiedText}>✓ Notified</Text>
+                  <Text style={[styles.notifiedText, { fontSize: sf(FontSize.xs) }]}>✓ Notified</Text>
                 </View>
               </TouchableOpacity>
             ))}
@@ -349,13 +349,13 @@ const styles = StyleSheet.create({
 
   // ── Countdown phase
   headingCountdown: {
-    fontSize: FontSize.xl,
+    // fontSize set inline via sf() — gu-text-scale
     fontWeight: '900',
     color: '#FFFFFF',
     textAlign: 'center',
   },
   subHeading: {
-    fontSize: FontSize.base,
+    // fontSize set inline via sf() — gu-text-scale
     color: '#FFFFFF', // gu-037: 0.85 opacity on red = ~4.8:1 borderline → pure white 5.7:1 ✅
     textAlign: 'center',
     lineHeight: 30,
@@ -373,7 +373,7 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   countdownNumber: {
-    fontSize: FontSize.hero, // intentionally large — SOS countdown must be unmissable
+    // fontSize set inline via sf() — gu-text-scale (intentionally large — SOS countdown must be unmissable)
     fontWeight: '900',
     color: SOS_RED,
     lineHeight: 90,
@@ -391,12 +391,12 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   cancelBtnText: {
-    fontSize: FontSize.base,
+    // fontSize set inline via sf() — gu-text-scale
     fontWeight: '800',
     color: '#FFFFFF',
   },
   cancelNote: {
-    fontSize: FontSize.xs,
+    // fontSize set inline via sf() — gu-text-scale
     color: '#FFFFFF', // gu-037: 0.65 opacity on red = 3.9:1 ❌ → pure white ✅
     textAlign: 'center',
     lineHeight: 22,
@@ -423,8 +423,8 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   sosIconText: {
+    // fontSize set inline via sf() — gu-text-scale
     color: SOS_RED,
-    fontSize: FontSize.sm,
     fontWeight: '900',
     letterSpacing: 1,
   },
@@ -463,18 +463,18 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   confirmedCheck: {
-    fontSize: FontSize.xxl,
+    // fontSize set inline via sf() — gu-text-scale
     fontWeight: '900',
     color: '#FFFFFF',
   },
   headingAlerted: {
-    fontSize: FontSize.xl,
+    // fontSize set inline via sf() — gu-text-scale
     fontWeight: '900',
     color: SOS_RED,
     textAlign: 'center',
   },
   alertedSub: {
-    fontSize: FontSize.sm,
+    // fontSize set inline via sf() — gu-text-scale
     color: '#4A4A6A',
     textAlign: 'center',
     lineHeight: 28,
@@ -486,7 +486,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
   },
   sectionLabel: {
-    fontSize: FontSize.xs,
+    // fontSize set inline via sf() — gu-text-scale
     fontWeight: '700',
     color: '#4A4A6A',
     textTransform: 'uppercase',
@@ -511,7 +511,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   contactInitial: {
-    fontSize: FontSize.base,
+    // fontSize set inline via sf() — gu-text-scale
     fontWeight: '800',
     color: '#FFFFFF',
   },
@@ -520,12 +520,12 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   contactName: {
-    fontSize: FontSize.sm,
+    // fontSize set inline via sf() — gu-text-scale
     fontWeight: '700',
     color: SOS_RED_DARK,
   },
   contactRole: {
-    fontSize: FontSize.xs,
+    // fontSize set inline via sf() — gu-text-scale
     color: '#4A4A6A',
   },
   notifiedBadge: {
@@ -535,7 +535,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   notifiedText: {
-    fontSize: FontSize.xs,
+    // fontSize set inline via sf() — gu-text-scale
     fontWeight: '700',
     color: '#166534',
   },
@@ -551,7 +551,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
   },
   call911Text: {
-    fontSize: FontSize.base,
+    // fontSize set inline via sf() — gu-text-scale
     fontWeight: '900',
     color: '#FFFFFF',
     letterSpacing: 0.3,
@@ -568,12 +568,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   safeBtnText: {
-    fontSize: FontSize.base,
+    // fontSize set inline via sf() — gu-text-scale
     fontWeight: '700',
     color: Colors.success, // gu-020: was hardcoded green
   },
   safeNote: {
-    fontSize: FontSize.xs,
+    // fontSize set inline via sf() — gu-text-scale
     color: '#4A4A6A',
     textAlign: 'center',
     lineHeight: 20,
