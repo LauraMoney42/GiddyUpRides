@@ -237,7 +237,7 @@ export default function HomeScreen({
                 accessibilityRole="button"
                 style={styles.viewAllButton}
               >
-                <Text style={styles.viewAllText}>View All →</Text>
+                <Text style={[styles.viewAllText, { fontSize: sf(FontSize.sm) }]}>View All →</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -248,9 +248,9 @@ export default function HomeScreen({
             ))
           ) : (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyEmoji}>🚗</Text>
-              <Text style={styles.emptyText}>No rides yet.</Text>
-              <Text style={styles.emptySubtext}>Your ride history will appear here.</Text>
+              <Text style={[styles.emptyEmoji, { fontSize: sf(FontSize.hero) }]}>🚗</Text>
+              <Text style={[styles.emptyText, { fontSize: sf(FontSize.lg) }]}>No rides yet.</Text>
+              <Text style={[styles.emptySubtext, { fontSize: sf(FontSize.base) }]}>Your ride history will appear here.</Text>
             </View>
           )}
 
@@ -443,9 +443,9 @@ function RecentRideCard({
   return (
     <View style={styles.rideCard}>
       <View style={styles.rideCardLeft}>
-        <Text style={styles.rideDestination}>{ride.destination}</Text>
-        <Text style={styles.rideDate}>{ride.date}</Text>
-        <Text style={styles.rideFare}>{ride.fare}</Text>
+        <Text style={[styles.rideDestination, { fontSize: sf(FontSize.base) }]}>{ride.destination}</Text>
+        <Text style={[styles.rideDate, { fontSize: sf(FontSize.sm) }]}>{ride.date}</Text>
+        <Text style={[styles.rideFare, { fontSize: sf(FontSize.sm) }]}>{ride.fare}</Text>
       </View>
       <TouchableOpacity
         style={[
@@ -461,7 +461,7 @@ function RecentRideCard({
         accessibilityHint="Books a new ride to this same destination"
         accessibilityRole="button"
       >
-        <Text style={styles.rebookText}>Rebook</Text>
+        <Text style={[styles.rebookText, { fontSize: sf(FontSize.sm) }]}>Rebook</Text>
       </TouchableOpacity>
     </View>
   );
@@ -602,7 +602,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xs,
   },
   viewAllText: {
-    fontSize: FontSize.sm,
     color: Colors.primary,
     fontWeight: '700',
   },
@@ -667,16 +666,13 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
   },
   rideDestination: {
-    fontSize: FontSize.base,
     color: Colors.textPrimary,
     fontWeight: '700',
   },
   rideDate: {
-    fontSize: FontSize.sm,
     color: Colors.textSecondary,
   },
   rideFare: {
-    fontSize: FontSize.sm,
     color: Colors.primary,
     fontWeight: '700',
   },
@@ -692,7 +688,6 @@ const styles = StyleSheet.create({
   },
   rebookText: {
     color: '#000000',
-    fontSize: FontSize.sm,
     fontWeight: '700',
   },
 
@@ -703,15 +698,12 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   emptyEmoji: {
-    fontSize: FontSize.hero,
   },
   emptyText: {
-    fontSize: FontSize.lg,
     color: Colors.textPrimary,
     fontWeight: '700',
   },
   emptySubtext: {
-    fontSize: FontSize.base,
     color: Colors.textSecondary,
     textAlign: 'center',
   },
