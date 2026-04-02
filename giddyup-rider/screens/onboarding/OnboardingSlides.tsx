@@ -138,7 +138,7 @@ export default function OnboardingSlides({ onDone, onBack }: Props) {
               accessibilityElementsHidden={true}
               importantForAccessibility="no-hide-descendants"
             >
-              <Text style={styles.sosDemoText}>SOS</Text>
+              <Text style={[styles.sosDemoText, { fontSize: sf(FontSize.sm) }]}>SOS</Text>
             </View>
           )}
 
@@ -149,7 +149,7 @@ export default function OnboardingSlides({ onDone, onBack }: Props) {
               <Ionicons name="mic" size={sf(52)} color="#FFFFFF" />
             </View>
           ) : (
-            !!slide.emoji && <Text style={styles.slideEmoji}>{slide.emoji}</Text>
+            !!slide.emoji && <Text style={[styles.slideEmoji, { fontSize: sf(FontSize.hero) }]}>{slide.emoji}</Text>
           )}
           <Text style={[styles.slideTitle, { fontSize: sf(FontSize.xl), lineHeight: sf(FontSize.xl) * 1.35 }]}>{slide.title}</Text>
           <Text style={[styles.slideBody, { fontSize: sf(FontSize.base), lineHeight: sf(FontSize.base) * 1.5 }]}>{slide.body}</Text>
@@ -236,22 +236,17 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.lg,
   },
   slideEmoji: {
-    fontSize: FontSize.hero, // intentionally large onboarding hero emoji
     marginBottom: Spacing.xl,
   },
   slideTitle: {
-    fontSize: FontSize.xl,
     fontWeight: '800',
     color: Colors.textPrimary,
     textAlign: 'center',
     marginBottom: Spacing.lg,
-    lineHeight: 42,
   },
   slideBody: {
-    fontSize: FontSize.base,
     color: Colors.textPrimary,
     textAlign: 'center',
-    lineHeight: 32,
     marginBottom: Spacing.lg,
   },
   detailBox: {
@@ -263,10 +258,8 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   slideDetail: {
-    fontSize: FontSize.sm,
     color: Colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 28,
   },
 
   // gu-sos-slide-001: Static SOS button — same style as headerSos in HomeScreen.tsx,
@@ -290,7 +283,6 @@ const styles = StyleSheet.create({
   },
   sosDemoText: {
     color: '#FFFFFF',
-    fontSize: FontSize.sm,
     fontWeight: '900',
     letterSpacing: 1,
   },
@@ -328,7 +320,6 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
   },
   backButtonText: {
-    fontSize: FontSize.sm,
     color: Colors.textSecondary,
     fontWeight: '600',
   },
@@ -346,7 +337,6 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   nextButtonText: {
-    fontSize: FontSize.sm,
     color: '#000000', // Black on gold — WCAG AAA contrast
     fontWeight: '800',
     letterSpacing: 0.3,

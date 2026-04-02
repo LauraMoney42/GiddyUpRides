@@ -68,7 +68,7 @@ export default function WelcomeSplashScreen({ onGetStarted }: Props) {
           {/* Decorative western divider */}
           <View style={styles.dividerRow}>
             <View style={styles.dividerLine} />
-            <Text style={styles.dividerStar}>✦</Text>
+            <Text style={[styles.dividerStar, { fontSize: sf(FontSize.xs) }]}>✦</Text>
             <View style={styles.dividerLine} />
           </View>
           <Text style={[styles.tagline, { fontSize: sf(FontSize.xl) }]}>Saddle Up!</Text>
@@ -98,7 +98,7 @@ export default function WelcomeSplashScreen({ onGetStarted }: Props) {
             <Text style={[styles.getStartedText, { fontSize: sf(FontSize.base) }]}>Get Started  →</Text>
           </TouchableOpacity>
 
-          <Text style={styles.alreadyHave}>
+          <Text style={[styles.alreadyHave, { fontSize: sf(FontSize.xs) }]}>
             Already have an account?{' '}
             <Text style={styles.signInLink}>Sign In</Text>
           </Text>
@@ -127,11 +127,10 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.xl,
   },
   horseEmoji: {
-    fontSize: 120, // gu-055: true hero size — larger than FontSize.hero for splash impact
+    // gu-055: true hero size — larger than FontSize.hero for splash impact (sf(60) inline)
     marginBottom: Spacing.md,
   },
   brandName: {
-    fontSize: FontSize.xxl,
     fontFamily: 'Rye_400Regular', // gu-052: western slab-serif to match logo style
     color: Colors.primary,        // Gold — brand accent on dark navy bg ✅
     letterSpacing: 6,
@@ -139,7 +138,6 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',         // gu-072: gives adjustsFontSizeToFit a width boundary
   },
   brandSub: {
-    fontSize: FontSize.base,
     fontFamily: 'Rye_400Regular', // gu-052: match GIDDY-UP western style
     color: Colors.primary,  // gu-053: full gold — matches brandName exactly ✅
     letterSpacing: 10,
@@ -158,11 +156,9 @@ const styles = StyleSheet.create({
   },
   dividerStar: {
     color: Colors.primary,
-    fontSize: FontSize.xs,
     marginHorizontal: Spacing.sm,
   },
   tagline: {
-    fontSize: FontSize.lg,
     fontWeight: '700',
     color: '#FFFFFF',
     letterSpacing: 1,
@@ -175,18 +171,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
   },
   headline: {
-    fontSize: FontSize.xxl,
     fontWeight: '800',
     color: '#FFFFFF',
     textAlign: 'center',
-    lineHeight: 50,
     marginBottom: Spacing.md,
   },
   body: {
-    fontSize: FontSize.sm,
     color: 'rgba(255,255,255,0.75)',
     textAlign: 'center',
-    lineHeight: 28,
   },
 
   // CTA
@@ -207,14 +199,12 @@ const styles = StyleSheet.create({
   },
   getStartedText: {
     color: '#000000', // solid black for maximum readability on gold button
-    fontSize: FontSize.lg,
     fontWeight: '900',
     letterSpacing: 0.5,
   },
   alreadyHave: {
     textAlign: 'center',
     color: 'rgba(255,255,255,0.6)',
-    fontSize: FontSize.xs,
   },
   signInLink: {
     color: Colors.primary,
