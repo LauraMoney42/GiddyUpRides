@@ -6,6 +6,7 @@ import React from 'react';
 import { TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Colors } from '../constants/theme';
 
 interface MicButtonProps {
   onPress: () => void;
@@ -36,7 +37,7 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: '#0066FF', // Electric blue — matches new primary theme
+    backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 200,
