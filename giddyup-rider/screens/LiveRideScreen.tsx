@@ -251,7 +251,7 @@ export default function LiveRideScreen({
       >
         {/* Status banner */}
         <View style={[styles.statusBanner, { backgroundColor: statusConfig.bannerColor }]}>
-          <Text style={styles.statusEmoji}>{statusConfig.emoji}</Text>
+          <Text style={[styles.statusEmoji, { fontSize: sf(FontSize.hero) }]}>{statusConfig.emoji}</Text>
           <Text
             style={[styles.statusTitle, { fontSize: sf(FontSize.xl) }]}
             accessibilityRole="header"
@@ -293,7 +293,7 @@ export default function LiveRideScreen({
             <View style={styles.driverInfo}>
               <Text style={[styles.driverName, { fontSize: sf(FontSize.lg) }]}>{driverName}</Text>
               <View style={styles.ratingRow}>
-                <Text style={styles.ratingStar}>⭐</Text>
+                <Text style={[styles.ratingStar, { fontSize: sf(FontSize.xs) }]}>⭐</Text>
                 <Text style={[styles.ratingText, { fontSize: sf(FontSize.sm) }]}>
                   {driverRating.toFixed(1)}
                 </Text>
@@ -325,7 +325,7 @@ export default function LiveRideScreen({
         <View style={styles.card}>
           <Text style={[styles.cardHeading, { fontSize: sf(FontSize.xs) }]}>Destination</Text>
           <View style={styles.destRow}>
-            <Text style={styles.destPin}>📍</Text>
+            <Text style={[styles.destPin, { fontSize: sf(FontSize.base) }]}>📍</Text>
             <Text
               style={[styles.destText, { fontSize: sf(FontSize.base), lineHeight: sf(FontSize.base) * 1.45 }]}
               accessibilityLabel={`Your destination is ${destination}`}
@@ -455,18 +455,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statusEmoji: {
-    fontSize: FontSize.hero, // decorative status emoji — intentionally large
+    // fontSize set inline via sf() — gu-text-scale
     marginBottom: Spacing.sm,
   },
   statusTitle: {
-    fontSize: FontSize.xl,
+    // fontSize set inline via sf() — gu-text-scale
     fontWeight: '800',
     color: '#FFFFFF',
     textAlign: 'center',
     marginBottom: 8,
   },
   statusSub: {
-    fontSize: FontSize.sm,
+    // fontSize set inline via sf() — gu-text-scale
     color: 'rgba(255,255,255,0.82)',
     textAlign: 'center',
     lineHeight: 26,
@@ -490,14 +490,14 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   etaLabel: {
-    fontSize: FontSize.xs,
+    // fontSize set inline via sf() — gu-text-scale
     fontWeight: '700',
     color: Colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
   },
   etaValue: {
-    fontSize: FontSize.base,
+    // fontSize set inline via sf() — gu-text-scale
     fontWeight: '800',
     color: Colors.primary,
   },
@@ -515,7 +515,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   cardHeading: {
-    fontSize: FontSize.xs,
+    // fontSize set inline via sf() — gu-text-scale
     fontWeight: '700',
     color: Colors.textSecondary,
     textTransform: 'uppercase',
@@ -538,7 +538,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarInitial: {
-    fontSize: FontSize.lg,
+    // fontSize set inline via sf(28) — gu-text-scale
     fontWeight: '800',
     color: '#000000', // Black on gold avatar — WCAG AAA
   },
@@ -547,7 +547,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   driverName: {
-    fontSize: FontSize.lg,
+    // fontSize set inline via sf() — gu-text-scale
     fontWeight: '700',
     color: Colors.textPrimary,
   },
@@ -557,10 +557,10 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   ratingStar: {
-    fontSize: FontSize.xs,
+    // fontSize set inline via sf() — gu-text-scale
   },
   ratingText: {
-    fontSize: FontSize.sm,
+    // fontSize set inline via sf() — gu-text-scale
     fontWeight: '600',
     color: Colors.textSecondary,
   },
@@ -586,14 +586,14 @@ const styles = StyleSheet.create({
     marginHorizontal: Spacing.md,
   },
   vehicleLabel: {
-    fontSize: FontSize.xs,
+    // fontSize set inline via sf() — gu-text-scale
     color: Colors.textSecondary,
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   vehicleValue: {
-    fontSize: FontSize.sm,
+    // fontSize set inline via sf() — gu-text-scale
     fontWeight: '700',
     color: Colors.textPrimary,
   },
@@ -610,12 +610,12 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   destPin: {
-    fontSize: FontSize.base,
+    // fontSize set inline via sf() — gu-text-scale
     marginTop: 1,
   },
   destText: {
     flex: 1,
-    fontSize: FontSize.base,
+    // fontSize set inline via sf() — gu-text-scale
     fontWeight: '600',
     color: Colors.textPrimary,
     lineHeight: 30,
@@ -635,7 +635,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   mapEmoji: {
-    fontSize: FontSize.hero, // decorative map placeholder emoji
+    fontSize: FontSize.hero, // decorative — map placeholder (unused when RideMapView renders)
   },
   mapLabel: {
     fontSize: FontSize.sm,
@@ -661,7 +661,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   primaryBtnText: {
-    fontSize: FontSize.base,
+    // fontSize set inline via sf() — gu-text-scale
     fontWeight: '800',
     color: '#000000',  // Black on gold = 8.6:1 ✅
   },
@@ -675,7 +675,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   cancelBtnText: {
-    fontSize: FontSize.sm,
+    // fontSize set inline via sf() — gu-text-scale
     fontWeight: '600',
     color: Colors.textSecondary,
   },
@@ -686,7 +686,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   inProgressText: {
-    fontSize: FontSize.sm,
+    // fontSize set inline via sf() — gu-text-scale
     color: Colors.primary,
     textAlign: 'center',
     lineHeight: 28,
