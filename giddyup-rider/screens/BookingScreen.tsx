@@ -203,9 +203,9 @@ export default function BookingScreen({ onBack, onRideConfirmed, onSOS, initialD
             accessibilityHint={step === 'destination' ? 'Returns to the home screen' : 'Returns to the previous step'}
             accessibilityRole="button"
           >
-            <Text style={styles.backArrow}>← Back</Text>
+            <Text style={[styles.backArrow, { fontSize: sf(FontSize.sm) }]}>← Back</Text>
           </TouchableOpacity>
-          <Text style={styles.screenTitle}>
+          <Text style={[styles.screenTitle, { fontSize: sf(FontSize.lg) }]}>
             {step === 'destination' && 'Where to?'}
             {step === 'drivers'     && 'Choose a Driver'}
             {step === 'confirm'     && 'Confirm Ride'}
@@ -256,7 +256,7 @@ export default function BookingScreen({ onBack, onRideConfirmed, onSOS, initialD
         >
           <View style={styles.modalOverlay}>
             <View style={styles.modalCard}>
-              <Text style={[styles.modalEmoji]}>🎉</Text>
+              <Text style={[styles.modalEmoji, { fontSize: sf(FontSize.hero) }]}>🎉</Text>
               <Text style={[styles.modalTitle, { fontSize: sf(26) }]}>
                 Ride Confirmed!
               </Text>
@@ -293,6 +293,8 @@ export default function BookingScreen({ onBack, onRideConfirmed, onSOS, initialD
 // ── Step Indicator ────────────────────────────────────────────────────────────
 
 function StepIndicator({ current }: { current: BookingStep }) {
+  const { fontScale } = useAccessibility();
+  const sf = (base: number) => Math.round(base * fontScale);
   const steps: BookingStep[] = ['destination', 'drivers', 'confirm'];
   const labels = ['Destination', 'Driver', 'Confirm'];
   const currentIdx = steps.indexOf(current);
@@ -303,11 +305,11 @@ function StepIndicator({ current }: { current: BookingStep }) {
         <React.Fragment key={s}>
           <View style={styles.stepItem}>
             <View style={[styles.stepDot, i <= currentIdx && styles.stepDotActive]}>
-              <Text style={[styles.stepNumber, i <= currentIdx && styles.stepNumberActive]}>
+              <Text style={[styles.stepNumber, i <= currentIdx && styles.stepNumberActive, { fontSize: sf(FontSize.sm) }]}>
                 {i + 1}
               </Text>
             </View>
-            <Text style={[styles.stepLabel, i === currentIdx && styles.stepLabelActive]}>
+            <Text style={[styles.stepLabel, i === currentIdx && styles.stepLabelActive, { fontSize: sf(FontSize.xs) }]}>
               {labels[i]}
             </Text>
           </View>
@@ -568,8 +570,8 @@ function DestinationStep({
       contentContainerStyle={styles.stepContent}
       keyboardShouldPersistTaps="handled"
     >
-      <Text style={styles.stepHeading}>Book your ride</Text>
-      <Text style={styles.stepSubheading}>Set your pickup and drop-off locations below.</Text>
+      <Text style={[styles.stepHeading, { fontSize: sf(FontSize.xl) }]}>Book your ride</Text>
+      <Text style={[styles.stepSubheading, { fontSize: sf(FontSize.base) }]}>Set your pickup and drop-off locations below.</Text>
 
       {/* gu-071: From / To card */}
       <View style={styles.routeCard}>
@@ -769,7 +771,7 @@ function DestinationStep({
             if (saved.length === 0) return null;
             return (
               <>
-                <Text style={styles.presetsLabel}>My Saved Places</Text>
+                <Text style={[styles.presetsLabel, { fontSize: sf(FontSize.sm) }]}>My Saved Places</Text>
                 {saved.map((fav) => (
                   <TouchableOpacity
                     key={fav.label}
@@ -784,8 +786,8 @@ function DestinationStep({
                     accessibilityLabel={`${fav.label}: ${fav.address}`}
                     accessibilityHint={`Sets destination to your saved ${fav.label.toLowerCase()} address`}
                   >
-                    <Text style={styles.presetLabel}>{fav.emoji}  {fav.label}</Text>
-                    <Text style={styles.presetAddress}>{fav.address}</Text>
+                    <Text style={[styles.presetLabel, { fontSize: sf(FontSize.base) }]}>{fav.emoji}  {fav.label}</Text>
+                    <Text style={[styles.presetAddress, { fontSize: sf(FontSize.sm) }]}>{fav.address}</Text>
                   </TouchableOpacity>
                 ))}
               </>
@@ -793,7 +795,7 @@ function DestinationStep({
           })()}
 
           {/* Quick-tap presets */}
-          <Text style={styles.presetsLabel}>Common Destinations</Text>
+          <Text style={[styles.presetsLabel, { fontSize: sf(FontSize.sm) }]}>Common Destinations</Text>
           {PRESET_DESTINATIONS.map((preset) => (
             <TouchableOpacity
               key={preset.address}
@@ -808,8 +810,8 @@ function DestinationStep({
               accessibilityHint={`Sets destination to ${preset.address}`}
               accessibilityRole="button"
             >
-              <Text style={styles.presetLabel}>{preset.label}</Text>
-              <Text style={styles.presetAddress}>{preset.address}</Text>
+              <Text style={[styles.presetLabel, { fontSize: sf(FontSize.base) }]}>{preset.label}</Text>
+              <Text style={[styles.presetAddress, { fontSize: sf(FontSize.sm) }]}>{preset.address}</Text>
             </TouchableOpacity>
           ))}
         </>
@@ -827,10 +829,10 @@ function DestinationStep({
         {searching ? (
           <View style={styles.searchingRow}>
             <ActivityIndicator color="#FFF" size="small" />
-            <Text style={styles.primaryButtonText}>Finding drivers…</Text>
+            <Text style={[styles.primaryButtonText, { fontSize: sf(FontSize.lg) }]}>Finding drivers…</Text>
           </View>
         ) : (
-          <Text style={styles.primaryButtonText}>🔍  Find Drivers</Text>
+          <Text style={[styles.primaryButtonText, { fontSize: sf(FontSize.lg) }]}>🔍  Find Drivers</Text>
         )}
       </TouchableOpacity>
 
@@ -850,13 +852,16 @@ function DriversStep({
   destination: string;
   onSelect: (d: MockDriver) => void;
 }) {
+  const { fontScale } = useAccessibility();
+  const sf = (base: number) => Math.round(base * fontScale);
+
   return (
     <ScrollView style={styles.stepScroll} contentContainerStyle={styles.stepContent}>
-      <Text style={styles.stepHeading}>Available Drivers</Text>
-      <Text style={styles.stepSubheading} numberOfLines={2}>
+      <Text style={[styles.stepHeading, { fontSize: sf(FontSize.xl) }]}>Available Drivers</Text>
+      <Text style={[styles.stepSubheading, { fontSize: sf(FontSize.base) }]} numberOfLines={2}>
         To: {destination}
       </Text>
-      <Text style={styles.stepNote}>All drivers are background-checked and rated by riders.</Text>
+      <Text style={[styles.stepNote, { fontSize: sf(FontSize.sm) }]}>All drivers are background-checked and rated by riders.</Text>
 
       {drivers.map((driver) => (
         <DriverCard key={driver.id} driver={driver} onSelect={onSelect} />
@@ -883,19 +888,19 @@ function DriverCard({
       {/* Driver info row */}
       <View style={styles.driverRow}>
         <View style={styles.driverAvatar}>
-          <Text style={styles.driverAvatarEmoji}>{driver.photoEmoji}</Text>
+          <Text style={[styles.driverAvatarEmoji, { fontSize: sf(FontSize.xl) }]}>{driver.photoEmoji}</Text>
         </View>
         <View style={styles.driverInfo}>
-          <Text style={styles.driverName}>{driver.name}</Text>
-          <Text style={styles.driverRating}>
+          <Text style={[styles.driverName, { fontSize: sf(FontSize.lg) }]}>{driver.name}</Text>
+          <Text style={[styles.driverRating, { fontSize: sf(FontSize.sm) }]}>
             {stars} {driver.rating.toFixed(1)} · {driver.totalRides} rides
           </Text>
-          <Text style={styles.driverVehicle}>{driver.vehicle}</Text>
-          <Text style={styles.driverPlate}>Plate: {driver.plate}</Text>
+          <Text style={[styles.driverVehicle, { fontSize: sf(FontSize.sm) }]}>{driver.vehicle}</Text>
+          <Text style={[styles.driverPlate, { fontSize: sf(FontSize.sm) }]}>Plate: {driver.plate}</Text>
         </View>
         <View style={styles.driverEtaBlock}>
           <Text
-            style={styles.driverEtaNumber}
+            style={[styles.driverEtaNumber, { fontSize: sf(FontSize.xxl) }]}
             adjustsFontSizeToFit
             numberOfLines={1}
           >
@@ -914,7 +919,7 @@ function DriverCard({
         accessibilityHint={`${driver.etaMinutes} minutes away. Fare ${driver.fare}. ${driver.rating} stars.`}
         accessibilityRole="button"
       >
-        <Text style={styles.selectButtonText}>Select {driver.name.split(' ')[0]}</Text>
+        <Text style={[styles.selectButtonText, { fontSize: sf(FontSize.base) }]}>Select {driver.name.split(' ')[0]}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -934,14 +939,15 @@ function ConfirmStep({
   onChangeDriver: () => void;
 }) {
   // gu-029: Read mobility profile — show notice if rider has any needs
-  const { prefs } = useAccessibility();
+  const { prefs, fontScale } = useAccessibility();
+  const sf = (base: number) => Math.round(base * fontScale);
   const hasMobilityNeeds = prefs.mobilityNeeds.length > 0 || prefs.mobilityNotes.trim().length > 0;
 
   const stars = '★'.repeat(Math.round(driver.rating)) + '☆'.repeat(5 - Math.round(driver.rating));
 
   return (
     <ScrollView style={styles.stepScroll} contentContainerStyle={styles.stepContent}>
-      <Text style={styles.stepHeading}>Review Your Ride</Text>
+      <Text style={[styles.stepHeading, { fontSize: sf(FontSize.xl) }]}>Review Your Ride</Text>
 
       {/* Summary card */}
       <View style={styles.summaryCard}>
@@ -956,7 +962,7 @@ function ConfirmStep({
         <View style={styles.summaryDivider} />
         <View style={styles.driverRatingRow}>
           <Text style={styles.summaryLabel}>Driver rating</Text>
-          <Text style={styles.summaryStars}>
+          <Text style={[styles.summaryStars, { fontSize: sf(FontSize.base) }]}>
             {stars} {driver.rating.toFixed(1)}
           </Text>
         </View>
@@ -965,13 +971,13 @@ function ConfirmStep({
       {/* gu-029: Accessibility notice — only shown if rider has mobility needs */}
       {hasMobilityNeeds && (
         <View style={styles.accessibilityNote}>
-          <Text style={styles.accessibilityNoteText}>
+          <Text style={[styles.accessibilityNoteText, { fontSize: sf(FontSize.sm) }]}>
             ♿  Your driver will be notified of your accessibility needs before pickup.
           </Text>
         </View>
       )}
 
-      <Text style={styles.confirmNote}>
+      <Text style={[styles.confirmNote, { fontSize: sf(FontSize.sm) }]}>
         Your driver will call if they have trouble finding you. Make sure your phone is nearby.
       </Text>
 
@@ -983,7 +989,7 @@ function ConfirmStep({
         accessibilityHint={`Confirms your ride with ${driver.name}. They will arrive in ${driver.etaMinutes} minutes.`}
         accessibilityRole="button"
       >
-        <Text style={styles.confirmButtonText}>✅  Confirm Ride</Text>
+        <Text style={[styles.confirmButtonText, { fontSize: sf(FontSize.lg) }]}>✅  Confirm Ride</Text>
       </TouchableOpacity>
 
       {/* Change driver */}
@@ -993,7 +999,7 @@ function ConfirmStep({
         accessibilityLabel="Choose a different driver"
         accessibilityRole="button"
       >
-        <Text style={styles.changeDriverText}>Choose a Different Driver</Text>
+        <Text style={[styles.changeDriverText, { fontSize: sf(FontSize.base) }]}>Choose a Different Driver</Text>
       </TouchableOpacity>
 
       <View style={{ height: 120 }} />
@@ -1002,11 +1008,13 @@ function ConfirmStep({
 }
 
 function SummaryRow({ icon, label, value }: { icon: string; label: string; value: string }) {
+  const { fontScale } = useAccessibility();
+  const sf = (base: number) => Math.round(base * fontScale);
   return (
     <View style={styles.summaryRow}>
-      <Text style={styles.summaryIcon}>{icon}</Text>
-      <Text style={styles.summaryLabel}>{label}</Text>
-      <Text style={styles.summaryValue} numberOfLines={2}>{value}</Text>
+      <Text style={[styles.summaryIcon, { fontSize: sf(FontSize.base) }]}>{icon}</Text>
+      <Text style={[styles.summaryLabel, { fontSize: sf(FontSize.sm) }]}>{label}</Text>
+      <Text style={[styles.summaryValue, { fontSize: sf(FontSize.base) }]} numberOfLines={2}>{value}</Text>
     </View>
   );
 }
@@ -1041,12 +1049,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   backArrow: {
-    fontSize: FontSize.sm,
+    // fontSize set inline via sf() — gu-text-scale
     color: Colors.primary,
     fontWeight: '700',
   },
   screenTitle: {
-    fontSize: FontSize.lg,
+    // fontSize set inline via sf() — gu-text-scale
     color: Colors.textPrimary,
     fontWeight: '800',
     textAlign: 'center',
@@ -1079,7 +1087,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
   },
   stepNumber: {
-    fontSize: FontSize.sm,
+    // fontSize set inline via sf() — gu-text-scale
     color: Colors.textSecondary,
     fontWeight: '700',
   },
@@ -1087,7 +1095,7 @@ const styles = StyleSheet.create({
     color: '#000000',  // Black on gold step dot = 8.6:1 ✅
   },
   stepLabel: {
-    fontSize: FontSize.xs,
+    // fontSize set inline via sf() — gu-text-scale
     color: Colors.textSecondary,
     fontWeight: '500',
   },
@@ -1114,18 +1122,18 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
   },
   stepHeading: {
-    fontSize: FontSize.xl,
+    // fontSize set inline via sf() — gu-text-scale
     color: Colors.textPrimary,
     fontWeight: '900',
     marginBottom: Spacing.xs,
   },
   stepSubheading: {
-    fontSize: FontSize.base,
+    // fontSize set inline via sf() — gu-text-scale
     color: Colors.textSecondary,
     marginBottom: Spacing.md,
   },
   stepNote: {
-    fontSize: FontSize.sm,
+    // fontSize set inline via sf() — gu-text-scale
     color: Colors.textSecondary,
     marginBottom: Spacing.md,
     fontStyle: 'italic',
@@ -1265,7 +1273,7 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
   },
   presetsLabel: {
-    fontSize: FontSize.sm,
+    // fontSize set inline via sf() — gu-text-scale
     color: Colors.textSecondary,
     fontWeight: '700',
     marginBottom: Spacing.sm,
@@ -1288,13 +1296,13 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   presetLabel: {
-    fontSize: FontSize.base,
+    // fontSize set inline via sf() — gu-text-scale
     color: Colors.textPrimary,
     fontWeight: '700',
     marginBottom: 2,
   },
   presetAddress: {
-    fontSize: FontSize.sm,
+    // fontSize set inline via sf() — gu-text-scale
     color: Colors.textSecondary,
   },
   primaryButton: {
@@ -1315,7 +1323,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.disabled,
   },
   primaryButtonText: {
-    fontSize: FontSize.lg,
+    // fontSize set inline via sf() — gu-text-scale
     color: '#000000',  // Black on gold = 8.6:1 ✅
     fontWeight: '900',
   },
@@ -1354,28 +1362,28 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   driverAvatarEmoji: {
-    fontSize: FontSize.xl,
+    // fontSize set inline via sf() — gu-text-scale
   },
   driverInfo: {
     flex: 1,
     gap: 3,
   },
   driverName: {
-    fontSize: FontSize.lg,
+    // fontSize set inline via sf() — gu-text-scale
     color: Colors.textPrimary,
     fontWeight: '800',
   },
   driverRating: {
-    fontSize: FontSize.sm,
+    // fontSize set inline via sf() — gu-text-scale
     color: Colors.accent,
     fontWeight: '600',
   },
   driverVehicle: {
-    fontSize: FontSize.sm,
+    // fontSize set inline via sf() — gu-text-scale
     color: Colors.textSecondary,
   },
   driverPlate: {
-    fontSize: FontSize.sm,
+    // fontSize set inline via sf() — gu-text-scale
     color: Colors.textSecondary,
   },
   driverEtaBlock: {
@@ -1383,18 +1391,18 @@ const styles = StyleSheet.create({
     minWidth: 60,
   },
   driverEtaNumber: {
-    fontSize: FontSize.xxl,
+    // fontSize set inline via sf() — gu-text-scale
     color: Colors.primary,
     fontWeight: '900',
   },
   driverEtaUnit: {
-    fontSize: FontSize.xs,
+    // fontSize set inline via sf() — gu-text-scale (see driverEtaUnit inline override)
     color: Colors.textSecondary,
     fontWeight: '600',
     marginTop: -4,
   },
   driverFare: {
-    fontSize: FontSize.sm,
+    // fontSize set inline via sf() — gu-text-scale (see driverFare inline override)
     color: Colors.textPrimary,
     fontWeight: '700',
     marginTop: Spacing.xs,
@@ -1407,7 +1415,7 @@ const styles = StyleSheet.create({
     minHeight: TouchTarget.min,
   },
   selectButtonText: {
-    fontSize: FontSize.base,
+    // fontSize set inline via sf() — gu-text-scale
     color: '#000000',  // Black on gold = 8.6:1 ✅
     fontWeight: '800',
   },
@@ -1428,19 +1436,19 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   summaryIcon: {
-    fontSize: FontSize.base,
+    // fontSize set inline via sf() — gu-text-scale
     width: 32,
     textAlign: 'center',
   },
   summaryLabel: {
-    fontSize: FontSize.sm,
+    // fontSize set inline via sf() — gu-text-scale
     color: Colors.textSecondary,
     width: 80,
     fontWeight: '600',
   },
   summaryValue: {
     flex: 1,
-    fontSize: FontSize.base,
+    // fontSize set inline via sf() — gu-text-scale
     color: Colors.textPrimary,
     fontWeight: '700',
   },
@@ -1456,7 +1464,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
   },
   summaryStars: {
-    fontSize: FontSize.base,
+    // fontSize set inline via sf() — gu-text-scale
     color: Colors.accent,
     fontWeight: '700',
   },
@@ -1470,13 +1478,13 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   accessibilityNoteText: {
-    fontSize: FontSize.sm,
+    // fontSize set inline via sf() — gu-text-scale
     color: Colors.textPrimary,          // White on navy = 15:1 ✅
     fontWeight: '600',
     lineHeight: 24,
   },
   confirmNote: {
-    fontSize: FontSize.sm,
+    // fontSize set inline via sf() — gu-text-scale
     color: Colors.textSecondary,
     textAlign: 'center',
     marginBottom: Spacing.lg,
@@ -1501,7 +1509,7 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   confirmButtonText: {
-    fontSize: FontSize.lg,
+    // fontSize set inline via sf() — gu-text-scale
     color: '#000000',  // Black on gold = 8.6:1 ✅
     fontWeight: '900',
   },
@@ -1511,7 +1519,7 @@ const styles = StyleSheet.create({
     minHeight: TouchTarget.min,
   },
   changeDriverText: {
-    fontSize: FontSize.base,
+    // fontSize set inline via sf() — gu-text-scale
     color: Colors.primary,
     fontWeight: '700',
     textDecorationLine: 'underline',
@@ -1538,7 +1546,7 @@ const styles = StyleSheet.create({
     elevation: 12,
   },
   modalEmoji: {
-    fontSize: FontSize.hero, // decorative modal emoji — intentionally large
+    // fontSize set inline via sf() — gu-text-scale
     marginBottom: Spacing.sm,
   },
   modalTitle: {
