@@ -300,7 +300,7 @@ export default function VoiceAssistant({ onNavigate, supportPhone = SUPPORT_PHON
           accessibilityState={{ busy: processing }}
           activeOpacity={0.8}
         >
-          <Text style={[styles.micEmoji, { color: micColor }]}>
+          <Text style={[styles.micEmoji, { fontSize: sf(30), color: micColor }]}>
             {processing ? '⏳' : listening ? '🛑' : '🎙️'}
           </Text>
         </TouchableOpacity>
@@ -415,7 +415,6 @@ const styles = StyleSheet.create({
   },
 
   micEmoji: {
-    fontSize: 30,
   },
 
   // Overlay card — shown above mic, below top of screen

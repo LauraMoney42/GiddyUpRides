@@ -335,7 +335,7 @@ export default function VoiceAssistantOverlay({ onIntent, hideFab = false, openT
           accessibilityLabel="Voice assistant"
           accessibilityHint="Tap to speak a command — book a ride, schedule a ride, and more"
         >
-          <Text style={styles.micEmoji}>🎙️</Text>
+          <Text style={[styles.micEmoji, { fontSize: sf(32) }]}>🎙️</Text>
         </TouchableOpacity>
       )}
 
@@ -374,7 +374,7 @@ export default function VoiceAssistantOverlay({ onIntent, hideFab = false, openT
                   { transform: [{ scale: pulseAnim }] },
                 ]}
               >
-                <Text style={styles.micCircleEmoji}>
+                <Text style={[styles.micCircleEmoji, { fontSize: sf(44) }]}>
                   {state === 'processing' ? '⏳' :
                    state === 'responding' ? '🔊' :
                    state === 'error'      ? '⚠️' : '🎙️'}
@@ -518,7 +518,6 @@ const styles = StyleSheet.create({
     zIndex: 90,
   },
   micEmoji: {
-    fontSize: 32,
   },
 
   // Modal overlay
@@ -580,7 +579,6 @@ const styles = StyleSheet.create({
     borderWidth: 3,
   },
   micCircleEmoji: {
-    fontSize: 44,
   },
 
   // Transcript

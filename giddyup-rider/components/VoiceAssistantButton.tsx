@@ -12,6 +12,7 @@ import {
   Vibration,
 } from 'react-native';
 import { Colors, Radius } from '../constants/theme';
+import { useAccessibility } from '../context/AccessibilityContext';
 
 interface Props {
   onPress: () => void;
@@ -19,6 +20,8 @@ interface Props {
 }
 
 export default function VoiceAssistantButton({ onPress, disabled = false }: Props) {
+  const { fontScale } = useAccessibility();
+  const sf = (base: number) => Math.round(base * fontScale);
   const scale = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
@@ -57,7 +60,7 @@ export default function VoiceAssistantButton({ onPress, disabled = false }: Prop
         accessibilityRole="button"
         disabled={disabled}
       >
-        <Text style={styles.icon}>🎙️</Text>
+        <Text style={[styles.icon, { fontSize: sf(30) }]}>🎙️</Text>
       </TouchableOpacity>
     </Animated.View>
   );
@@ -88,6 +91,5 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
   icon: {
-    fontSize: 30,
   },
 });
