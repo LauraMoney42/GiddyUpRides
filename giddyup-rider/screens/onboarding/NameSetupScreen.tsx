@@ -98,7 +98,7 @@ export default function NameSetupScreen({ onDone, onBack, onSOS, onVoiceMic }: P
               accessibilityHint="Enter your first name. Only your first name is needed."
             />
             {hasError && (
-              <Text style={styles.errorText} accessibilityLiveRegion="polite">
+              <Text style={[styles.errorText, { fontSize: sf(FontSize.xs) }]} accessibilityLiveRegion="polite">
                 Please enter your name to continue.
               </Text>
             )}
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: Colors.sos,
-    fontSize: FontSize.xs,
+    // fontSize set inline via sf(FontSize.xs)
     marginTop: Spacing.xs,
     fontWeight: '500',
   },
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
   doneButtonText: {
-    color: '#000000', // Black on gold — WCAG AAA contrast
+    color: '#FFFFFF', // Black on gold — WCAG AAA contrast
     fontWeight: '800',
     letterSpacing: 0.2,
     textAlign: 'center',

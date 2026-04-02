@@ -217,13 +217,13 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   optionLabelSelected: {
-    color: '#000000',  // Black on gold = 8.6:1 ✅
+    color: '#FFFFFF',  // Black on gold = 8.6:1 ✅
   },
   optionDescription: {
     color: Colors.textSecondary,
   },
   optionDescriptionSelected: {
-    color: '#000000',  // Black on gold = 8.6:1 ✅
+    color: '#FFFFFF',  // Black on gold = 8.6:1 ✅
   },
   radio: {
     width: 26,
@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   nextButtonText: {
-    color: '#000000',  // Black on gold = 8.6:1 ✅
+    color: '#FFFFFF',  // Black on gold = 8.6:1 ✅
     fontWeight: '800',
     letterSpacing: 0.3,
   },

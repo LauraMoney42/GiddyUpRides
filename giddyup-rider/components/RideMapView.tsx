@@ -142,7 +142,7 @@ export default function RideMapView({
         {/* Driver/car marker — color matches booked vehicle */}
         {driverCoord && (
           <View style={[styles.carMarker, { backgroundColor: carColor, top: '42%', left: '38%' }]}>
-            <Text style={[styles.carEmoji, { color: carTextColor }]}>🚗</Text>
+            <Text style={[styles.carEmoji, { color: carTextColor, fontSize: sf(20) }]}>🚗</Text>
           </View>
         )}
       </View>
@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   pinEmoji: {
-    fontSize: 26,
+    // fontSize set inline via sf(22)
   },
   markerLabel: {
     borderRadius: 6,
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
   },
   markerLabelText: {
     color: '#fff',
-    fontSize: 11,
+    // fontSize set inline via sf(11)
     fontWeight: '700',
   },
 
@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   carEmoji: {
-    fontSize: 20,
+    // fontSize set inline via sf(20)
   },
 
   // Prototype badge
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
   },
   mockBadgeText: {
     color: '#fff',
-    fontSize: 11,
+    // fontSize set inline via sf(11)
     fontWeight: '500',
   },
 });

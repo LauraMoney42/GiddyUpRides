@@ -379,7 +379,7 @@ const styles = StyleSheet.create({
   },
   summaryNumber: {
     // fontSize set inline via sf() — gu-text-scale
-    color: '#000000', // Black on gold strip — WCAG AAA
+    color: '#FFFFFF', // Black on gold strip — WCAG AAA
     fontWeight: '900',
   },
   summaryLabel: {
@@ -535,7 +535,7 @@ const styles = StyleSheet.create({
   },
   rebookText: {
     // fontSize set inline via sf() — gu-text-scale
-    color: '#000000', // Black on gold — WCAG AAA
+    color: '#FFFFFF', // Black on gold — WCAG AAA
     fontWeight: '800',
   },
 

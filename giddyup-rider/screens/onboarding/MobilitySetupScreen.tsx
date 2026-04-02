@@ -200,7 +200,7 @@ export default function MobilitySetupScreen({
                   accessibilityLabel={option.label}
                   accessibilityHint={isSelected ? 'Tap to deselect' : 'Tap to select'}
                 >
-                  <Text style={styles.optionEmoji}>{option.emoji}</Text>
+                  <Text style={[styles.optionEmoji, { fontSize: sf(FontSize.lg) }]}>{option.emoji}</Text>
                   <Text style={[
                     styles.optionLabel,
                     { fontSize: sf(FontSize.base), lineHeight: sf(FontSize.base) * 1.4 },
@@ -210,7 +210,7 @@ export default function MobilitySetupScreen({
                   </Text>
                   {/* Checkbox indicator */}
                   <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
-                    {isSelected && <Text style={styles.checkmark}>✓</Text>}
+                    {isSelected && <Text style={[styles.checkmark, { fontSize: sf(FontSize.xs) }]}>✓</Text>}
                   </View>
                 </TouchableOpacity>
               );
@@ -395,7 +395,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,  // Gold bg — black text = 8.6:1 ✅
   },
   optionEmoji: {
-    fontSize: FontSize.lg,
+    // fontSize set inline via sf(FontSize.lg)
     width: 36,
     textAlign: 'center',
   },
@@ -405,7 +405,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   optionLabelSelected: {
-    color: '#000000', // Black on gold = 8.6:1 ✅
+    color: '#FFFFFF', // Black on gold = 8.6:1 ✅
   },
   checkbox: {
     width: 28,
@@ -422,8 +422,8 @@ const styles = StyleSheet.create({
     borderColor: Colors.primary,
   },
   checkmark: {
-    color: '#000000',  // Black on gold checkbox = 8.6:1 ✅
-    fontSize: FontSize.xs,
+    color: '#FFFFFF',  // Black on gold checkbox = 8.6:1 ✅
+    // fontSize set inline via sf(FontSize.xs)
     fontWeight: '800',
   },
 
@@ -486,7 +486,7 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   saveBtnText: {
-    color: '#000000',  // Black on gold = 8.6:1 ✅
+    color: '#FFFFFF',  // Black on gold = 8.6:1 ✅
     fontWeight: '800',
     letterSpacing: 0.3,
   },

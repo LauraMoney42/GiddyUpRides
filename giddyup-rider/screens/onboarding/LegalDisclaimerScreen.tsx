@@ -82,7 +82,7 @@ export default function LegalDisclaimerScreen({ onAccept }: Props) {
         </View>
 
         {/* ── Header ─────────────────────────────────────────────────────── */}
-        <Text style={styles.heroEmoji}>🐴</Text>
+        <Text style={[styles.heroEmoji, { fontSize: sf(80) }]}>🐴</Text>
         <Text
           style={[styles.heading, { fontSize: sf(FontSize.xl), lineHeight: sf(FontSize.xl) * 1.3 }]}
           accessibilityRole="header"
@@ -131,7 +131,7 @@ export default function LegalDisclaimerScreen({ onAccept }: Props) {
 
         {/* ── Emergency banner ───────────────────────────────────────────── */}
         <View style={styles.emergencyBanner} accessibilityLiveRegion="assertive">
-          <Text style={[styles.emergencyEmoji]}>🚨</Text>
+          <Text style={[styles.emergencyEmoji, { fontSize: sf(FontSize.lg) }]}>🚨</Text>
           <Text style={[styles.emergencyText, { fontSize: sf(FontSize.base), lineHeight: sf(FontSize.base) * 1.5 }]}>
             If you are in danger, call 911 now.{'\n'}
             <Text style={styles.emergencyBold}>Do not rely on any app in an emergency.</Text>
@@ -174,7 +174,7 @@ function SectionCard({
   return (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
-        <Text style={styles.cardEmoji}>{emoji}</Text>
+        <Text style={[styles.cardEmoji, { fontSize: sf(FontSize.base) }]}>{emoji}</Text>
         <Text style={[styles.cardTitle, { fontSize: sf(FontSize.base) }]}>
           {title}
         </Text>
@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
   },
 
   heroEmoji: {
-    fontSize: 80, // gu-054: bumped from FontSize.hero (48) — large hero display size
+    // fontSize set inline via sf(80) — gu-054: bumped from FontSize.hero (48)
     textAlign: 'center',
     marginBottom: Spacing.sm,
   },
@@ -248,8 +248,8 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: Radius.md,
     borderWidth: 1.5,
-    borderColor: 'rgba(200,150,62,0.35)',   // subtle gold border
-    backgroundColor: '#243255',              // Colors.surface — navy card
+    borderColor: 'rgba(0,102,255,0.25)',   // subtle gold border
+    backgroundColor: '#111111',              // Colors.surface — dark card
     padding: Spacing.lg,
     marginBottom: Spacing.md,
   },
@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
   },
 
   cardEmoji: {
-    fontSize: FontSize.base,
+    // fontSize set inline via sf(FontSize.base)
   },
 
   cardTitle: {
@@ -312,7 +312,7 @@ const styles = StyleSheet.create({
   emergencyBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1A2744',              // deep navy
+    backgroundColor: '#000000',              // black background
     borderRadius: Radius.md,
     borderWidth: 2,
     borderColor: Colors.primary,             // gold border
@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
   },
 
   emergencyEmoji: {
-    fontSize: FontSize.lg,
+    // fontSize set inline via sf(FontSize.lg)
     flexShrink: 0,
   },
 
@@ -353,7 +353,7 @@ const styles = StyleSheet.create({
   },
 
   acceptButtonText: {
-    color: '#000000',                        // black on gold — max contrast
+    color: '#FFFFFF',                        // black on gold — max contrast
     fontWeight: '800',
     letterSpacing: 0.3,
     textAlign: 'center',

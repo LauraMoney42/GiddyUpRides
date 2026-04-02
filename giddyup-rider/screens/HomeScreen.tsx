@@ -543,7 +543,7 @@ const styles = StyleSheet.create({
   },
   bookButtonText: {
     flex: 1,
-    color: '#000000',
+    color: '#FFFFFF',
     fontWeight: '900',
     textAlign: 'center',
   },
@@ -553,7 +553,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: 'rgba(200,150,62,0.12)',
+    backgroundColor: 'rgba(0,102,255,0.12)',
     borderRadius: Radius.full,
     paddingHorizontal: Spacing.lg,
     marginTop: Spacing.md,
@@ -687,7 +687,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   rebookText: {
-    color: '#000000',
+    color: '#FFFFFF',
     fontWeight: '700',
   },
 

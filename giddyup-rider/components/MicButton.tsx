@@ -36,7 +36,7 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: '#C8963E',
+    backgroundColor: '#0066FF', // Electric blue — matches new primary theme
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 200,

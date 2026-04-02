@@ -3,19 +3,19 @@
 // Accessibility-first: large fonts, high-contrast, generous touch targets.
 
 export const Colors = {
-  primary: '#C8963E',      // Warm Gold — primary action (gu-020)
-  primaryDark: '#A67A2E',  // Deep Gold — pressed state (gu-020)
-  accent: '#F4A261',       // Warm amber — highlights, SOS warning
+  primary: '#0066FF',      // Electric Blue — primary action
+  primaryDark: '#0044CC',  // Deep Electric Blue — pressed state
+  accent: '#4D99FF',       // Light Electric Blue — highlights
   sos: '#D62828',          // Red — SOS / emergency button (unchanged)
   sosDark: '#9B1C1C',      // Darker red — SOS pressed state (unchanged)
-  background: '#1A2744',   // Deep Navy — app background (gu-020)
-  surface: '#243255',      // Navy surface — card background (gu-020)
-  textPrimary: '#FFFFFF',  // White — main text on dark bg (gu-020)
-  textSecondary: '#B0BEC5',// Light blue-grey — secondary text (gu-020)
-  border: '#2E3F6E',       // Navy border — subtle on dark bg (gu-020)
-  success: '#4CAF50',      // Green — confirmed (adjusted for dark bg)
-  warning: '#F4A261',      // Amber — in-progress
-  disabled: '#4A5A7A',     // Muted navy — disabled state on dark bg (gu-020)
+  background: '#000000',   // Black — app background
+  surface: '#111111',      // Near-black — card/surface background
+  textPrimary: '#FFFFFF',  // White — main text on dark bg
+  textSecondary: '#9E9E9E',// Medium grey — secondary text
+  border: '#222222',       // Dark border — subtle on black bg
+  success: '#4CAF50',      // Green — confirmed (unchanged)
+  warning: '#F4A261',      // Amber — in-progress (unchanged)
+  disabled: '#3A3A3A',     // Dark grey — disabled state on black bg
 };
 
 // Minimum touch target per accessibility spec: 60×60pt

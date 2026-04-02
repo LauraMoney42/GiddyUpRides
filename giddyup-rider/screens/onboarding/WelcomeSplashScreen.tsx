@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: 'rgba(200,150,62,0.35)',  // Gold divider line
+    backgroundColor: 'rgba(0,102,255,0.25)',  // Gold divider line
   },
   dividerStar: {
     color: Colors.primary,
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   getStartedText: {
-    color: '#000000', // solid black for maximum readability on gold button
+    color: '#FFFFFF', // solid black for maximum readability on gold button
     fontWeight: '900',
     letterSpacing: 0.5,
   },

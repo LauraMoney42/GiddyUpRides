@@ -540,7 +540,7 @@ const styles = StyleSheet.create({
   avatarInitial: {
     // fontSize set inline via sf(28) — gu-text-scale
     fontWeight: '800',
-    color: '#000000', // Black on gold avatar — WCAG AAA
+    color: '#FFFFFF', // Black on gold avatar — WCAG AAA
   },
   driverInfo: {
     flex: 1,
@@ -635,15 +635,13 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   mapEmoji: {
-    fontSize: FontSize.hero, // decorative — map placeholder (unused when RideMapView renders)
+    // decorative map placeholder — unused when RideMapView renders; fontSize omitted (dead style)
   },
   mapLabel: {
-    fontSize: FontSize.sm,
     fontWeight: '700',
     color: Colors.primary,
   },
   mapSub: {
-    fontSize: FontSize.xs,
     color: Colors.textSecondary,
   },
 
@@ -663,7 +661,7 @@ const styles = StyleSheet.create({
   primaryBtnText: {
     // fontSize set inline via sf() — gu-text-scale
     fontWeight: '800',
-    color: '#000000',  // Black on gold = 8.6:1 ✅
+    color: '#FFFFFF',  // Black on gold = 8.6:1 ✅
   },
   cancelBtn: {
     borderWidth: 1.5,

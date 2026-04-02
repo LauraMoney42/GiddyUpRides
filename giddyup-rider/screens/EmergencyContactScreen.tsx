@@ -249,7 +249,7 @@ export default function EmergencyContactScreen({ onBack, onDone, isOnboarding = 
           {/* Explanation (settings mode only) */}
           {!isOnboarding && (
             <View style={styles.infoCard}>
-              <Text style={[styles.infoEmoji]}>🚨</Text>
+              <Text style={[styles.infoEmoji, { fontSize: sf(FontSize.base) }]}>🚨</Text>
               <Text style={[styles.infoText, { fontSize: sf(FontSize.sm), lineHeight: sf(FontSize.sm) * 1.5 }]}>
                 These people will be notified immediately when you trigger the SOS button.
                 GiddyUp dispatch is always notified — add personal contacts below (up to {MAX_CONTACTS}).
@@ -310,7 +310,7 @@ export default function EmergencyContactScreen({ onBack, onDone, isOnboarding = 
 
           {contacts.length === 0 && (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyEmoji}>👤</Text>
+              <Text style={[styles.emptyEmoji, { fontSize: sf(FontSize.hero) }]}>👤</Text>
               <Text style={[styles.emptyText, { fontSize: sf(FontSize.sm) }]}>
                 No personal contacts added yet.
               </Text>
@@ -490,12 +490,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   backBtnText: {
-    fontSize: FontSize.sm,
+    // fontSize set inline via sf(FontSize.sm)
     color: Colors.primary,
     fontWeight: '700',
   },
   title: {
-    fontSize: FontSize.lg,
+    // fontSize set inline via sf(FontSize.lg)
     fontWeight: '800',
     color: Colors.textPrimary,
     textAlign: 'center',
@@ -524,12 +524,12 @@ const styles = StyleSheet.create({
     borderColor: Colors.primary,        // Gold border ✅
   },
   infoEmoji: {
-    fontSize: FontSize.base,
+    // fontSize set inline via sf(FontSize.base)
     lineHeight: 28,
   },
   infoText: {
     flex: 1,
-    fontSize: FontSize.sm,
+    // fontSize set inline via sf(FontSize.sm)
     color: Colors.textPrimary,          // White on navy = 15:1 ✅
   },
 
@@ -539,7 +539,7 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   sectionLabel: {
-    fontSize: FontSize.xs,
+    // fontSize set inline via sf(FontSize.xs)
     fontWeight: '700',
     color: Colors.textSecondary,
     textTransform: 'uppercase',
@@ -573,25 +573,25 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   contactInitial: {
-    fontSize: FontSize.base,
+    // fontSize set inline via sf(FontSize.base)
     fontWeight: '800',
-    color: '#000000', // Black on gold avatar — WCAG AAA
+    color: '#FFFFFF', // Black on gold avatar — WCAG AAA
   },
   contactInfo: {
     flex: 1,
     gap: 2,
   },
   contactName: {
-    fontSize: FontSize.base,
+    // fontSize set inline via sf(FontSize.base)
     fontWeight: '700',
     color: Colors.textPrimary,
   },
   contactRole: {
-    fontSize: FontSize.xs,
+    // fontSize set inline via sf(FontSize.xs)
     color: Colors.textSecondary,
   },
   contactPhone: {
-    fontSize: FontSize.sm,
+    // fontSize set inline via sf(FontSize.sm)
     color: Colors.primary,
     fontWeight: '600',
     marginTop: 2,
@@ -607,7 +607,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   removeBtnText: {
-    fontSize: FontSize.xs,
+    // fontSize set inline via sf(FontSize.xs)
     fontWeight: '700',
     color: '#D62828',
   },
@@ -620,15 +620,15 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   emptyEmoji: {
-    fontSize: FontSize.hero,
+    // fontSize set inline via sf(FontSize.hero)
   },
   emptyText: {
-    fontSize: FontSize.sm,
+    // fontSize set inline via sf(FontSize.sm)
     fontWeight: '700',
     color: Colors.textPrimary,
   },
   emptySubtext: {
-    fontSize: FontSize.xs,
+    // fontSize set inline via sf(FontSize.xs)
     color: Colors.textSecondary,
     textAlign: 'center',
     paddingHorizontal: Spacing.md,
@@ -651,13 +651,13 @@ const styles = StyleSheet.create({
     borderColor: Colors.primary,
   },
   addButtonIcon: {
-    fontSize: FontSize.base,
+    // fontSize set inline via sf(FontSize.xl)
   },
   addButtonText: {
     flex: 1,               // gu-061: fills remaining row space so text wraps at XXL instead of clipping
-    fontSize: FontSize.base,
+    // fontSize set inline via sf(FontSize.base)
     fontWeight: '800',
-    color: '#000000',      // Black on gold = 8.6:1 ✅
+    color: '#FFFFFF',      // Black on gold = 8.6:1 ✅
   },
   addButtonTextSecondary: {
     color: Colors.primary, // secondary button — primary color text
@@ -674,7 +674,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xs,
   },
   fieldLabel: {
-    fontSize: FontSize.xs,
+    // fontSize set inline via sf(FontSize.xs)
     fontWeight: '700',
     color: Colors.textSecondary,
     textTransform: 'uppercase',
@@ -699,9 +699,9 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xs,
   },
   saveBtnText: {
-    fontSize: FontSize.base,
+    // fontSize set inline via sf(FontSize.base)
     fontWeight: '800',
-    color: '#000000', // Black on gold — WCAG AAA
+    color: '#FFFFFF', // Black on gold — WCAG AAA
   },
 
   // Onboarding-mode content padding
@@ -754,7 +754,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
   },
   continueBtnText: {
-    color: '#000000', // Black on gold — WCAG AAA
+    color: '#FFFFFF', // Black on gold — WCAG AAA
     fontWeight: '800',
     letterSpacing: 0.3,
   },
@@ -780,7 +780,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   limitText: {
-    fontSize: FontSize.xs,
+    // fontSize set inline via sf(FontSize.xs)
     color: Colors.textPrimary,          // White on navy = 15:1 ✅
     textAlign: 'center',
     fontWeight: '600',

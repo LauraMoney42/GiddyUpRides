@@ -258,7 +258,7 @@ export default function ScheduleRideScreen({ onBack, onConfirm, onSOS, onVoiceMi
             <Text style={[styles.headerTitle, { fontSize: sf(FontSize.base) }]}>
               {stepTitles[step]}
             </Text>
-            <Text style={styles.stepIndicator}>
+            <Text style={[styles.stepIndicator, { fontSize: sf(FontSize.xs) }]}>
               Step {stepIndex[step]} of 4
             </Text>
           </View>
@@ -308,7 +308,7 @@ export default function ScheduleRideScreen({ onBack, onConfirm, onSOS, onVoiceMi
                             accessibilityHint={`Schedule a ride to your saved ${f.label.toLowerCase()} address`}
                             activeOpacity={0.75}
                           >
-                            <Text style={styles.presetEmoji}>{f.emoji}</Text>
+                            <Text style={[styles.presetEmoji, { fontSize: sf(FontSize.lg) }]}>{f.emoji}</Text>
                             <Text style={[styles.presetLabel, { fontSize: sf(14) }, isSelected && styles.presetLabelSelected]}>
                               {f.label}
                             </Text>
@@ -337,7 +337,7 @@ export default function ScheduleRideScreen({ onBack, onConfirm, onSOS, onVoiceMi
                       accessibilityLabel={p.label}
                       activeOpacity={0.75}
                     >
-                      <Text style={styles.presetEmoji}>{p.emoji}</Text>
+                      <Text style={[styles.presetEmoji, { fontSize: sf(FontSize.lg) }]}>{p.emoji}</Text>
                       <Text style={[styles.presetLabel, { fontSize: sf(14) }, isSelected && styles.presetLabelSelected]}>
                         {p.label}
                       </Text>
@@ -378,7 +378,7 @@ export default function ScheduleRideScreen({ onBack, onConfirm, onSOS, onVoiceMi
                     accessibilityLabel="Use this address"
                     activeOpacity={0.8}
                   >
-                    <Text style={styles.inputConfirmText}>Use</Text>
+                    <Text style={[styles.inputConfirmText, { fontSize: sf(FontSize.xs) }]}>Use</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -546,7 +546,7 @@ export default function ScheduleRideScreen({ onBack, onConfirm, onSOS, onVoiceMi
             <View>
               {/* Summary card */}
               <View style={styles.summaryCard}>
-                <Text style={styles.summaryEmoji}>🗓</Text>
+                <Text style={[styles.summaryEmoji, { fontSize: sf(FontSize.hero) }]}>🗓</Text>
                 <Text style={[styles.summaryTitle, { fontSize: sf(FontSize.lg) }]}>
                   Your Scheduled Ride
                 </Text>
@@ -646,7 +646,7 @@ const styles = StyleSheet.create({
   backBtnText: { color: Colors.primary, fontWeight: '700' },
   headerCenter: { flex: 1, alignItems: 'center' },
   headerTitle: { fontWeight: '800', color: Colors.textPrimary },
-  stepIndicator: { fontSize: FontSize.xs, color: Colors.textSecondary, marginTop: 2 },
+  stepIndicator: { /* fontSize set inline via sf(FontSize.xs) */ color: Colors.textSecondary, marginTop: 2 },
   headerSpacer: { minWidth: TouchTarget.min },
 
   // Progress bar
@@ -691,9 +691,9 @@ const styles = StyleSheet.create({
     borderColor: Colors.primary,
     backgroundColor: Colors.primary,  // Gold bg — black text = 8.6:1 ✅
   },
-  presetEmoji: { fontSize: FontSize.lg },
+  presetEmoji: { /* fontSize set inline via sf(FontSize.lg) */ },
   presetLabel: { fontWeight: '600', color: Colors.textPrimary, textAlign: 'center' },
-  presetLabelSelected: { color: '#000000' }, // Black on gold = 8.6:1 ✅
+  presetLabelSelected: { color: '#FFFFFF' }, // Black on gold = 8.6:1 ✅
 
   // Custom input
   inputRow: {
@@ -720,7 +720,7 @@ const styles = StyleSheet.create({
     minHeight: TouchTarget.min,
     justifyContent: 'center',
   },
-  inputConfirmText: { color: '#000000', fontWeight: '700', fontSize: FontSize.xs }, // Black on gold ✅
+  inputConfirmText: { color: '#FFFFFF', fontWeight: '700' /* fontSize set inline via sf(FontSize.xs) */ }, // Black on gold ✅
 
   // gu-057: autocomplete dropdown
   dropdownCard: {
@@ -790,7 +790,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 18,
   },
-  dayTileTextSelected: { color: '#000000' }, // Black on gold = 8.6:1 ✅
+  dayTileTextSelected: { color: '#FFFFFF' }, // Black on gold = 8.6:1 ✅
 
   // Time picker grid
   timeGrid: {
@@ -818,7 +818,7 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     fontWeight: '600',
   },
-  timeTileTextSelected: { color: '#000000' }, // Black on gold = 8.6:1 ✅
+  timeTileTextSelected: { color: '#FFFFFF' }, // Black on gold = 8.6:1 ✅
 
   // Next button
   nextBtn: {
@@ -839,7 +839,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0,
     elevation: 0,
   },
-  nextBtnText: { color: '#000000', fontWeight: '800' }, // Black on gold = 8.6:1 ✅
+  nextBtnText: { color: '#FFFFFF', fontWeight: '800' }, // Black on gold = 8.6:1 ✅
 
   // Confirm summary card
   summaryCard: {
@@ -852,7 +852,7 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
     marginBottom: Spacing.lg,
   },
-  summaryEmoji: { fontSize: FontSize.hero, marginBottom: Spacing.xs },
+  summaryEmoji: { /* fontSize set inline via sf(FontSize.hero) */ marginBottom: Spacing.xs },
   summaryTitle: { fontWeight: '800', color: Colors.textPrimary },
   summaryDivider: { height: 1, backgroundColor: Colors.border, width: '100%', marginVertical: Spacing.xs },
   summaryRow: {
@@ -873,7 +873,7 @@ const styles = StyleSheet.create({
 
   // gu-029: Accessibility notice banner (matches BookingScreen pattern)
   accessibilityNote: {
-    backgroundColor: 'rgba(200,150,62,0.15)',
+    backgroundColor: 'rgba(0,102,255,0.15)',
     borderRadius: Radius.md,
     borderLeftWidth: 3,
     borderLeftColor: Colors.primary,
@@ -896,7 +896,7 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 6,
   },
-  scheduleBtnText: { color: '#000000', fontWeight: '900' }, // Black on gold — WCAG AAA
+  scheduleBtnText: { color: '#FFFFFF', fontWeight: '900' }, // Black on gold — WCAG AAA
   editBtn: {
     alignItems: 'center',
     justifyContent: 'center',

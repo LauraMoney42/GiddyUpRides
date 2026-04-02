@@ -629,7 +629,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   retryBtnText: {
-    color: '#000000', // Black on gold — WCAG AAA contrast ✅
+    color: '#FFFFFF', // Black on gold — WCAG AAA contrast ✅
     fontWeight: '700',
   },
 

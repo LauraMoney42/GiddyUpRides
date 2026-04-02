@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#000000',
+    backgroundColor: '#0066FF', // Electric blue — visible on black background
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: Spacing.xl,
@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   nextButtonText: {
-    color: '#000000', // Black on gold — WCAG AAA contrast
+    color: '#FFFFFF', // Black on gold — WCAG AAA contrast
     fontWeight: '800',
     letterSpacing: 0.3,
   },

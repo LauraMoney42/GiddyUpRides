@@ -75,7 +75,7 @@ export default function NotificationPermissionScreen({ onDone }: Props) {
 
         {/* Icon */}
         <View style={styles.iconCircle} accessibilityElementsHidden>
-          <Text style={styles.icon}>🔔</Text>
+          <Text style={[styles.icon, { fontSize: sf(FontSize.hero) }]}>🔔</Text>
         </View>
 
         {/* Heading */}
@@ -156,7 +156,7 @@ export default function NotificationPermissionScreen({ onDone }: Props) {
 function BenefitRow({ emoji, text, sf }: { emoji: string; text: string; sf: (n: number) => number }) {
   return (
     <View style={benefitStyles.row}>
-      <Text style={benefitStyles.emoji} accessibilityElementsHidden>{emoji}</Text>
+      <Text style={[benefitStyles.emoji, { fontSize: sf(FontSize.lg) }]} accessibilityElementsHidden>{emoji}</Text>
       <Text style={[benefitStyles.text, { fontSize: sf(FontSize.sm), lineHeight: sf(FontSize.sm) * 1.55 }]}>
         {text}
       </Text>
@@ -172,7 +172,7 @@ const benefitStyles = StyleSheet.create({
     paddingVertical: Spacing.sm,
   },
   emoji: {
-    fontSize: FontSize.lg,
+    // fontSize set inline via sf(FontSize.lg)
     width: 36,
     textAlign: 'center',
   },
@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   icon: {
-    fontSize: FontSize.hero,
+    // fontSize set inline via sf(FontSize.hero)
   },
 
   title: {
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   enableBtnText: {
-    color: '#000000',  // Black on gold — WCAG AAA contrast ✅
+    color: '#FFFFFF',  // Black on gold — WCAG AAA contrast ✅
     fontWeight: '800',
     letterSpacing: 0.3,
     textAlign: 'center',
