@@ -99,7 +99,7 @@ export default function TextSizeScreen({ onNext }: Props) {
                     ]}>
                       {option.label}
                     </Text>
-                    <Text style={[styles.optionDescription, isSelected && styles.optionDescriptionSelected]}>
+                    <Text style={[styles.optionDescription, { fontSize: sf(FontSize.xs) }, isSelected && styles.optionDescriptionSelected]}>
                       {option.description}
                     </Text>
                   </View>
@@ -155,11 +155,9 @@ const styles = StyleSheet.create({
     width: 28,
   },
   title: {
-    fontSize: FontSize.xl,
     fontWeight: '800',
     color: Colors.textPrimary,
     marginBottom: Spacing.xl,
-    lineHeight: 42,
   },
   // subtitle removed — "You can change this any time in Settings" copy removed per UX feedback
 
@@ -176,7 +174,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   previewLabel: {
-    fontSize: FontSize.xs,
     color: Colors.textSecondary,
     letterSpacing: 1.4,
     marginBottom: Spacing.sm,
@@ -223,7 +220,6 @@ const styles = StyleSheet.create({
     color: '#000000',  // Black on gold = 8.6:1 ✅
   },
   optionDescription: {
-    fontSize: FontSize.xs,
     color: Colors.textSecondary,
   },
   optionDescriptionSelected: {
@@ -265,7 +261,6 @@ const styles = StyleSheet.create({
   },
   nextButtonText: {
     color: '#000000',  // Black on gold = 8.6:1 ✅
-    fontSize: FontSize.base,
     fontWeight: '800',
     letterSpacing: 0.3,
   },
