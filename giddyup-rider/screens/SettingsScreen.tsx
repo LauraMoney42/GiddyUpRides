@@ -20,12 +20,11 @@ import {
   Linking,
   Alert,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors, FontSize, Radius, Spacing, TouchTarget } from '../constants/theme';
-import { useAccessibility } from '../context/AccessibilityContext';
-
-// ── Types ─────────────────────────────────────────────────────────────────────
-
-type TextSizeOption = 'normal' | 'large' | 'extra-large' | 'xxl';
+import { useAccessibility, TextSizeOption } from '../context/AccessibilityContext';
+import MicFab from '../components/MicFab';
+import SOSButton from '../components/SOSButton';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -36,11 +35,12 @@ const KINDCODE_URL   = 'https://kindcode.us';            // gu-027: KindCode web
 const PRIVACY_URL    = 'https://kindcode.ca/privacy';
 const TERMS_URL      = 'https://kindcode.ca/terms';
 
+// Values MUST match TextSizeOption in AccessibilityContext — context is the source of truth
 const TEXT_SIZE_OPTIONS: { value: TextSizeOption; label: string; preview: number }[] = [
-  { value: 'normal',      label: 'Normal',      preview: 20 },
-  { value: 'large',       label: 'Large',       preview: 24 },
-  { value: 'extra-large', label: 'Extra Large', preview: 30 },
-  { value: 'xxl',         label: 'XXL',         preview: 36 },
+  { value: 'normal',  label: 'Normal',      preview: 20 },
+  { value: 'large',   label: 'Large',       preview: 24 },
+  { value: 'xlarge',  label: 'Extra Large', preview: 30 },
+  { value: 'xxlarge', label: 'XXL',         preview: 36 },
 ];
 
 // ── SettingsScreen ─────────────────────────────────────────────────────────────
@@ -49,24 +49,30 @@ interface SettingsScreenProps {
   userName?: string;
   onBack?: () => void;
   onSignOut?: () => void;
-  onEmergencyContacts?: () => void; // gu-019
-  onMobilitySettings?: () => void;  // gu-029
+  onEmergencyContacts?: () => void;  // gu-019
+  onMobilitySettings?: () => void;   // gu-029
+  onFavoriteSettings?: () => void;   // gu-onboarding-favorites-001: edit saved places
+  onSOS?: () => void;                // gu-059: SOS always visible
+  onVoiceMic?: () => void;           // gu-059: bottom nav mic
 }
 
 export default function SettingsScreen({
-  userName = 'Dorothy',
+  userName = 'there',
   onBack,
   onSignOut,
   onEmergencyContacts,
   onMobilitySettings,
+  onFavoriteSettings,
+  onSOS,
+  onVoiceMic,
 }: SettingsScreenProps) {
-  const { fontScale, prefs } = useAccessibility();
+  const { fontScale, prefs, setTextSize: ctxSetTextSize, setReadAloud: ctxSetReadAloud } = useAccessibility();
   const sf = (base: number) => Math.round(base * fontScale);
 
-  // Accessibility prefs — TODO: persist to AsyncStorage (gu-003 integration)
-  const [textSize, setTextSize]           = useState<TextSizeOption>('large');
-  const [readAloud, setReadAloud]         = useState(false);
-  const [highContrast, setHighContrast]   = useState(false);
+  // Seeded from context prefs so Settings reflects the user's current onboarding choices
+  const [textSize, setTextSize] = useState<TextSizeOption>(prefs.textSize);
+  const [readAloud, setReadAloud] = useState(prefs.readAloud === 'yes');
+  const [highContrast, setHighContrast] = useState(false);
 
   // Account
   const [displayName] = useState(userName);
@@ -75,6 +81,12 @@ export default function SettingsScreen({
   const emergencyContactLabel = emergencyContactCount > 0
     ? `${emergencyContactCount} contact${emergencyContactCount > 1 ? 's' : ''} saved`
     : 'Not set';
+
+  // gu-onboarding-favorites-001: count how many favorite addresses are filled in
+  const favAddresses = prefs.favoriteAddresses;
+  const favCount = [favAddresses.home, favAddresses.grocery, favAddresses.park, favAddresses.doctor]
+    .filter(a => a.trim().length > 0).length;
+  const favLabel = favCount > 0 ? `${favCount} of 4 saved` : 'None saved';
 
   const handleBugReport = () => {
     Vibration.vibrate(50);
@@ -126,6 +138,8 @@ export default function SettingsScreen({
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <View style={styles.root}>
+
       {/* Header */}
       <View style={styles.header}>
         {onBack && (
@@ -135,12 +149,16 @@ export default function SettingsScreen({
             accessibilityLabel="Go back"
             accessibilityRole="button"
           >
-            <Text style={styles.backIcon}>←</Text>
+            <Text style={[styles.backIcon, { fontSize: sf(FontSize.lg) }]}>←</Text>
           </TouchableOpacity>
         )}
         <Text style={[styles.headerTitle, { fontSize: sf(FontSize.xl) }]} numberOfLines={1} adjustsFontSizeToFit>Settings</Text>
+        {/* gu-059: spacer matches SOS button width so title stays centered */}
         <View style={styles.headerSpacer} />
       </View>
+
+      {/* gu-069: SOSButton shared component — self-positioning via safe area insets */}
+      <SOSButton onPress={onSOS ?? (() => {})} />
 
       <ScrollView
         style={styles.scroll}
@@ -149,12 +167,12 @@ export default function SettingsScreen({
       >
 
         {/* ── Accessibility ──────────────────────────────────────────── */}
-        <SectionHeader title="Accessibility" emoji="♿️" />
+        <SectionHeader title="Accessibility" emoji="♿️" sf={sf} />
 
         {/* Text size picker */}
         <View style={styles.card}>
-          <Text style={styles.settingLabel}>Text Size</Text>
-          <Text style={styles.settingSubLabel}>Choose a comfortable reading size</Text>
+          <Text style={[styles.settingLabel, { fontSize: sf(FontSize.base) }]}>Text Size</Text>
+          <Text style={[styles.settingSubLabel, { fontSize: sf(FontSize.sm) }]}>Choose a comfortable reading size</Text>
           <View style={styles.textSizeRow}>
             {TEXT_SIZE_OPTIONS.map((opt) => (
               <TouchableOpacity
@@ -163,7 +181,7 @@ export default function SettingsScreen({
                   styles.textSizePill,
                   textSize === opt.value && styles.textSizePillSelected,
                 ]}
-                onPress={() => { Vibration.vibrate(50); setTextSize(opt.value); }}
+                onPress={() => { Vibration.vibrate(50); setTextSize(opt.value); ctxSetTextSize(opt.value); }}
                 accessibilityLabel={`Text size: ${opt.label}`}
                 accessibilityState={{ selected: textSize === opt.value }}
                 accessibilityRole="radio"
@@ -180,6 +198,7 @@ export default function SettingsScreen({
                 <Text
                   style={[
                     styles.textSizePillLabel,
+                    { fontSize: sf(FontSize.xs) },
                     textSize === opt.value && styles.textSizePillTextSelected,
                   ]}
                 >
@@ -196,9 +215,10 @@ export default function SettingsScreen({
           label="Read Aloud"
           subLabel="The app will speak screen content out loud"
           value={readAloud}
-          onValueChange={(v) => { Vibration.vibrate(50); setReadAloud(v); }}
+          onValueChange={(v) => { Vibration.vibrate(50); setReadAloud(v); ctxSetReadAloud(v ? 'yes' : 'no'); }}
           accessibilityLabel="Read aloud"
           accessibilityHint="When on, the app reads screen content aloud using your device's voice"
+          sf={sf}
         />
 
         {/* High contrast toggle */}
@@ -210,10 +230,11 @@ export default function SettingsScreen({
           onValueChange={(v) => { Vibration.vibrate(50); setHighContrast(v); }}
           accessibilityLabel="High contrast mode"
           accessibilityHint="When on, uses pure black and white colors for maximum readability"
+          sf={sf}
         />
 
         {/* ── Account ────────────────────────────────────────────────── */}
-        <SectionHeader title="Account" emoji="👤" />
+        <SectionHeader title="Account" emoji="👤" sf={sf} />
 
         <SettingRow
           emoji="✏️"
@@ -225,6 +246,7 @@ export default function SettingsScreen({
           }}
           accessibilityLabel={`Your name: ${displayName || 'Not set'}`}
           accessibilityHint="Tap to edit your name"
+          sf={sf}
         />
 
         <SettingRow
@@ -238,6 +260,7 @@ export default function SettingsScreen({
           accessibilityLabel={`Emergency contact: ${emergencyContactLabel}`}
           accessibilityHint="Tap to add or change your emergency contacts"
           showChevron
+          sf={sf}
         />
 
         {/* gu-029: Mobility & Accessibility */}
@@ -254,10 +277,26 @@ export default function SettingsScreen({
           accessibilityLabel="Mobility and accessibility needs"
           accessibilityHint="Tap to tell drivers about any mobility or accessibility needs before your ride"
           showChevron
+          sf={sf}
+        />
+
+        {/* gu-onboarding-favorites-001: Favorite places — edit saved addresses */}
+        <SettingRow
+          emoji="⭐"
+          label="Favorite Places"
+          value={favLabel}
+          onPress={() => {
+            Vibration.vibrate(50);
+            onFavoriteSettings?.();
+          }}
+          accessibilityLabel={`Favorite places: ${favLabel}`}
+          accessibilityHint="Tap to add or edit your saved destinations like home, grocery store, and doctor"
+          showChevron
+          sf={sf}
         />
 
         {/* ── Support ────────────────────────────────────────────────── */}
-        <SectionHeader title="Support" emoji="💬" />
+        <SectionHeader title="Support" emoji="💬" sf={sf} />
 
         <SettingRow
           emoji="🐛"
@@ -266,6 +305,7 @@ export default function SettingsScreen({
           accessibilityLabel="Report a bug or ask a question"
           accessibilityHint="Opens your email app to contact the Giddy-Up Rides support team"
           showChevron
+          sf={sf}
         />
 
         {/* gu-027: KindCode website */}
@@ -276,6 +316,7 @@ export default function SettingsScreen({
           accessibilityLabel="Visit the KindCode website"
           accessibilityHint="Opens kindcode.us in your browser"
           showChevron
+          sf={sf}
         />
 
         <SettingRow
@@ -285,6 +326,7 @@ export default function SettingsScreen({
           accessibilityLabel="Privacy Policy"
           accessibilityHint="Opens the privacy policy in your browser"
           showChevron
+          sf={sf}
         />
 
         <SettingRow
@@ -294,18 +336,19 @@ export default function SettingsScreen({
           accessibilityLabel="Terms of Service"
           accessibilityHint="Opens the terms of service in your browser"
           showChevron
+          sf={sf}
         />
 
         {/* ── App ────────────────────────────────────────────────────── */}
-        <SectionHeader title="App" emoji="📱" />
+        <SectionHeader title="App" emoji="📱" sf={sf} />
 
         <View style={styles.card}>
           <View style={styles.appInfoRow}>
-            <Text style={styles.appInfoLabel}>Version</Text>
-            <Text style={styles.appInfoValue}>{APP_VERSION}</Text>
+            <Text style={[styles.appInfoLabel, { fontSize: sf(FontSize.base) }]}>Version</Text>
+            <Text style={[styles.appInfoValue, { fontSize: sf(FontSize.base) }]}>{APP_VERSION}</Text>
           </View>
           <View style={styles.divider} />
-          <Text style={styles.madeWith}>Made with ❤️ by KindCode</Text>
+          <Text style={[styles.madeWith, { fontSize: sf(FontSize.base) }]}>Made with ❤️ by KindCode</Text>
         </View>
 
         {/* ── Sign Out ───────────────────────────────────────────────── */}
@@ -317,23 +360,29 @@ export default function SettingsScreen({
             accessibilityHint="Signs you out of the app"
             accessibilityRole="button"
           >
-            <Text style={styles.signOutText}>Sign Out</Text>
+            <Text style={[styles.signOutText, { fontSize: sf(FontSize.base) }]}>Sign Out</Text>
           </TouchableOpacity>
         </View>
 
-        <View style={{ height: 48 }} />
+        {/* Extra padding so last card clears the bottom nav bar */}
+        <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* gu-068: Mic moved to floating MicFab (bottom-right) — bottom nav removed */}
+      <MicFab onPress={onVoiceMic} />
+
+      </View>
     </SafeAreaView>
   );
 }
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
-function SectionHeader({ title, emoji }: { title: string; emoji: string }) {
+function SectionHeader({ title, emoji, sf }: { title: string; emoji: string; sf: (n: number) => number }) {
   return (
     <View style={styles.sectionHeader}>
-      <Text style={styles.sectionEmoji}>{emoji}</Text>
-      <Text style={styles.sectionTitle}>{title}</Text>
+      <Text style={[styles.sectionEmoji, { fontSize: sf(FontSize.sm) }]}>{emoji}</Text>
+      <Text style={[styles.sectionTitle, { fontSize: sf(FontSize.sm) }]}>{title}</Text>
     </View>
   );
 }
@@ -346,6 +395,7 @@ function SettingToggle({
   onValueChange,
   accessibilityLabel,
   accessibilityHint,
+  sf,
 }: {
   emoji: string;
   label: string;
@@ -354,14 +404,15 @@ function SettingToggle({
   onValueChange: (v: boolean) => void;
   accessibilityLabel: string;
   accessibilityHint?: string;
+  sf: (n: number) => number;
 }) {
   return (
     <View style={styles.card}>
       <View style={styles.toggleRow}>
-        <Text style={styles.rowEmoji}>{emoji}</Text>
+        <Text style={[styles.rowEmoji, { fontSize: sf(FontSize.base) }]}>{emoji}</Text>
         <View style={styles.rowTextCol}>
-          <Text style={styles.rowLabel}>{label}</Text>
-          {subLabel && <Text style={styles.rowSubLabel}>{subLabel}</Text>}
+          <Text style={[styles.rowLabel, { fontSize: sf(FontSize.base) }]}>{label}</Text>
+          {subLabel && <Text style={[styles.rowSubLabel, { fontSize: sf(FontSize.sm) }]}>{subLabel}</Text>}
         </View>
         <Switch
           value={value}
@@ -384,6 +435,7 @@ function SettingRow({
   accessibilityLabel,
   accessibilityHint,
   showChevron = false,
+  sf,
 }: {
   emoji: string;
   label: string;
@@ -392,6 +444,7 @@ function SettingRow({
   accessibilityLabel: string;
   accessibilityHint?: string;
   showChevron?: boolean;
+  sf: (n: number) => number;
 }) {
   return (
     <TouchableOpacity
@@ -402,13 +455,13 @@ function SettingRow({
       accessibilityRole="button"
     >
       <View style={styles.toggleRow}>
-        <Text style={styles.rowEmoji}>{emoji}</Text>
+        <Text style={[styles.rowEmoji, { fontSize: sf(FontSize.base) }]}>{emoji}</Text>
         <View style={styles.rowTextCol}>
-          <Text style={styles.rowLabel}>{label}</Text>
-          {value && <Text style={styles.rowSubLabel}>{value}</Text>}
+          <Text style={[styles.rowLabel, { fontSize: sf(FontSize.base) }]}>{label}</Text>
+          {value && <Text style={[styles.rowSubLabel, { fontSize: sf(FontSize.sm) }]}>{value}</Text>}
         </View>
         {showChevron && (
-          <Text style={styles.chevron}>›</Text>
+          <Text style={[styles.chevron, { fontSize: sf(FontSize.lg) }]}>›</Text>
         )}
       </View>
     </TouchableOpacity>
@@ -422,6 +475,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
+  root: {
+    flex: 1,
+  },
+
+  // gu-068: bottomNav/bottomNavMic removed — mic is now MicFab floating bottom-right
+  // gu-069: sosFab/sosFabText removed — replaced by shared SOSButton component
 
   // Header
   header: {
@@ -440,13 +499,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   backIcon: {
-    fontSize: FontSize.lg,
+    // fontSize set inline via sf() — gu-076
     color: Colors.primary,
     fontWeight: '600',
   },
   headerTitle: {
     flex: 1,
-    fontSize: FontSize.xl,
+    // fontSize set inline via sf() — already done (line 155)
     fontWeight: '800',
     color: Colors.textPrimary,
     textAlign: 'center',
@@ -474,10 +533,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xs,
   },
   sectionEmoji: {
-    fontSize: FontSize.sm,
+    // fontSize set inline via sf() — gu-076
   },
   sectionTitle: {
-    fontSize: FontSize.sm,
+    // fontSize set inline via sf() — gu-076
     fontWeight: '800',
     color: Colors.textSecondary,
     textTransform: 'uppercase',
@@ -502,7 +561,7 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   rowEmoji: {
-    fontSize: FontSize.base,
+    // fontSize set inline via sf() — gu-076
     width: 32,
     textAlign: 'center',
   },
@@ -511,29 +570,29 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   rowLabel: {
-    fontSize: FontSize.base,
+    // fontSize set inline via sf() — gu-076
     color: Colors.textPrimary,
     fontWeight: '700',
   },
   rowSubLabel: {
-    fontSize: FontSize.sm,
+    // fontSize set inline via sf() — gu-076
     color: Colors.textSecondary,
   },
   chevron: {
-    fontSize: FontSize.lg,
+    // fontSize set inline via sf() — gu-076
     color: Colors.textSecondary,
     fontWeight: '300',
   },
 
   // Text size picker
   settingLabel: {
-    fontSize: FontSize.base,
+    // fontSize set inline via sf() — gu-076
     color: Colors.textPrimary,
     fontWeight: '700',
     marginBottom: 2,
   },
   settingSubLabel: {
-    fontSize: FontSize.sm,
+    // fontSize set inline via sf() — gu-076
     color: Colors.textSecondary,
     marginBottom: Spacing.md,
   },
@@ -562,7 +621,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   textSizePillLabel: {
-    fontSize: FontSize.xs,
+    // fontSize set inline via sf() — gu-076
     color: Colors.textSecondary,
     fontWeight: '600',
   },
@@ -577,12 +636,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   appInfoLabel: {
-    fontSize: FontSize.base,
+    // fontSize set inline via sf() — gu-076
     color: Colors.textPrimary,
     fontWeight: '700',
   },
   appInfoValue: {
-    fontSize: FontSize.base,
+    // fontSize set inline via sf() — gu-076
     color: Colors.textSecondary,
   },
   divider: {
@@ -591,7 +650,7 @@ const styles = StyleSheet.create({
     marginVertical: Spacing.md,
   },
   madeWith: {
-    fontSize: FontSize.base,
+    // fontSize set inline via sf() — gu-076
     color: Colors.textSecondary,
     textAlign: 'center',
     fontWeight: '500',
@@ -613,7 +672,7 @@ const styles = StyleSheet.create({
     minHeight: TouchTarget.large,
   },
   signOutText: {
-    fontSize: FontSize.base,
+    // fontSize set inline via sf() — gu-076
     color: '#D62828',
     fontWeight: '800',
   },

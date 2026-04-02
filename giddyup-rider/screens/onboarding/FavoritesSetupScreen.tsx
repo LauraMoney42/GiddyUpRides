@@ -46,11 +46,13 @@ import {
 import * as Contacts from 'expo-contacts';
 import { Colors, FontSize, Radius, Spacing, TouchTarget } from '../../constants/theme';
 import { useAccessibility, FavoriteAddresses } from '../../context/AccessibilityContext';
+import SOSButton from '../../components/SOSButton';
+import MicFab from '../../components/MicFab';
 
 // ── Google Places config ──────────────────────────────────────────────────────
-// Replace with your actual key or load from env (process.env.GOOGLE_PLACES_API_KEY).
+// gu-057: Wired from EXPO_PUBLIC_GOOGLE_MAPS_API_KEY (same key used by BookingScreen).
 // Autocomplete silently degrades (no suggestions shown) if key is empty or invalid.
-const GOOGLE_PLACES_API_KEY = '';
+const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ?? '';
 
 const PLACES_URL = 'https://maps.googleapis.com/maps/api/place/autocomplete/json';
 
@@ -105,6 +107,8 @@ interface Props {
   onDone: () => void;
   onBack?: () => void;
   isOnboarding?: boolean;
+  onSOS?: () => void;
+  onVoiceMic?: () => void;
 }
 
 // ── FavoritesSetupScreen ──────────────────────────────────────────────────────
@@ -113,6 +117,8 @@ export default function FavoritesSetupScreen({
   onDone,
   onBack,
   isOnboarding = false,
+  onSOS,
+  onVoiceMic,
 }: Props) {
   const { prefs, setFavoriteAddresses, fontScale } = useAccessibility();
   const sf = (base: number) => Math.round(base * fontScale);
@@ -134,6 +140,10 @@ export default function FavoritesSetupScreen({
 
   // Debounce timers — one per slot
   const timers = useRef<Partial<Record<keyof FavoriteAddresses, ReturnType<typeof setTimeout>>>>({});
+
+  // gu-062: Set true on suggestion onTouchStart so the onBlur timer doesn't
+  // clear the dropdown before onPress fires (prevents blink/disappear bug).
+  const selectingRef = useRef(false);
 
   // ── Address autocomplete ──────────────────────────────────────────────────
 
@@ -206,9 +216,19 @@ export default function FavoritesSetupScreen({
     setActiveDropdown(null);
   };
 
+  // Fully clear suggestions + close dropdown (used after selection or input cleared)
   const clearDropdown = (key: keyof FavoriteAddresses) => {
     setSuggestions(prev => ({ ...prev, [key]: [] }));
     setActiveDropdown(null);
+  };
+
+  // gu-062: Only hide the dropdown visually — preserves the suggestions array so
+  // onFocus can restore the dropdown without a redundant API round-trip.
+  // Used by onBlur where a spurious blur/focus cycle (iOS keyboard animation)
+  // would otherwise nuke suggestions before the user can tap one.
+  const hideDropdown = (key: keyof FavoriteAddresses) => {
+    setActiveDropdown(null);
+    // suggestions array intentionally left intact
   };
 
   // ── Import from Contacts ──────────────────────────────────────────────────
@@ -369,14 +389,20 @@ export default function FavoritesSetupScreen({
                     value={addresses[slot.key]}
                     onChangeText={v => handleTextChange(slot.key, v)}
                     onFocus={() => {
-                      // Re-show dropdown if we already have suggestions for this slot
+                      // gu-062: suggestions array is preserved through blur (see hideDropdown),
+                      // so we can restore the dropdown immediately on refocus without an API call.
                       if ((suggestions[slot.key]?.length ?? 0) > 0) {
                         setActiveDropdown(slot.key);
                       }
                     }}
                     onBlur={() => {
-                      // Slight delay so tap-on-suggestion fires before dropdown hides
-                      setTimeout(() => clearDropdown(slot.key), 180);
+                      // gu-062: selectingRef guards against the blur firing during a
+                      // tap on a suggestion row. If the user is mid-tap, skip hiding
+                      // the dropdown — onPress will close it cleanly instead.
+                      setTimeout(() => {
+                        if (!selectingRef.current) hideDropdown(slot.key);
+                        selectingRef.current = false; // reset after each blur cycle
+                      }, 200);
                     }}
                     placeholder={slot.placeholder}
                     placeholderTextColor={Colors.textSecondary}
@@ -389,7 +415,15 @@ export default function FavoritesSetupScreen({
 
                   {/* Autocomplete dropdown */}
                   {dropdownOpen && (
-                    <View style={styles.dropdown}>
+                    <View
+                      style={styles.dropdown}
+                      onStartShouldSetResponderCapture={() => {
+                        // gu-062: capture phase fires before blur/responder change — sets flag
+                        // so the onBlur 200ms timer knows NOT to close the dropdown mid-tap.
+                        selectingRef.current = true;
+                        return false; // don't capture — let child TouchableOpacity respond
+                      }}
+                    >
                       {isLoadingThis ? (
                         <View style={styles.dropdownLoading}>
                           <ActivityIndicator color={Colors.primary} size="small" />
@@ -466,6 +500,9 @@ export default function FavoritesSetupScreen({
 
         </ScrollView>
       </KeyboardAvoidingView>
+      {/* gu-069: SOS + mic always visible */}
+      <SOSButton onPress={onSOS ?? (() => {})} />
+      <MicFab onPress={onVoiceMic} />
     </SafeAreaView>
   );
 }

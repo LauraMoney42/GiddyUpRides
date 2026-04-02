@@ -631,7 +631,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   retryBtnText: {
-    color: '#FFFFFF',
+    color: '#000000', // Black on gold — WCAG AAA contrast ✅
     fontWeight: '700',
   },
 

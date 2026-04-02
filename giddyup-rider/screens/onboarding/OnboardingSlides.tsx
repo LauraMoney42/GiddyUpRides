@@ -59,7 +59,7 @@ const SLIDES: Slide[] = [
     emoji: '',
     title: 'The SOS Button',
     body: 'Every screen has a red SOS button. If you ever feel unsafe or need help, tap it.',
-    detail: 'It will call 911, contact your emergency contact, and alert Giddy-Up support — all in one tap.',
+    detail: 'Tapping SOS starts a 5-second countdown — cancel anytime if it was a mistake. If the countdown completes, your emergency contacts and Giddy-Up HQ are notified and your location is shared. You can then choose to call 911.',
     showSosButton: true,
   },
   {

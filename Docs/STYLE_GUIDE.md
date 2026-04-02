@@ -273,7 +273,97 @@ These rules apply to every screen, every component, always:
 
 ---
 
-## 9. Voice & Tone
+## 9. Persistent UI Elements
+
+These two elements — **SOS** and **Mic** — must appear on every screen of the rider app, identically styled, and behave identically regardless of which screen the user is on. They are life-safety and primary-navigation elements and are never optional.
+
+---
+
+### 9.1 SOS Button
+
+**Purpose:** Immediate emergency access — always one tap away.
+
+**Visual Spec:**
+
+| Property | Value |
+|---|---|
+| Shape | Circle |
+| Size | 72 × 72pt |
+| Color | Emergency Red `#D62828` |
+| Label | "SOS" — white, Bold 900, scales with user font size (`sf(FontSize.sm)`) |
+| Shadow | Red glow — `shadowColor: #D62828`, opacity 0.5, radius 8 |
+| Position | `absolute`, `top: 16pt`, `right: 24pt` |
+| z-index | Above all screen content (zIndex 200+) |
+
+**Behavior:**
+1. Tap → haptic vibration (100ms)
+2. Confirmation dialog appears: "Call for Help?" — prevents accidental activation
+3. Confirm → navigates to SOSScreen (countdown → alerting → alerted)
+4. Cancel → dismisses dialog, returns to current screen
+
+**Rules:**
+- Must appear on **every screen** — no exceptions except SOSScreen itself (recursive)
+- Must be **absolutely positioned** and completely decoupled from layout flow — long text, large fonts, and scrolling content must never displace or overlap the button
+- Must function identically on every screen — same color, same size, same dialog, same action
+- Do not resize or recolor the SOS button for any reason — it is a life-safety element
+- Padding at top-right of screen headers must reserve space so nothing visually overlaps the button
+
+**Implementation:** Use `components/SOSButton.tsx` on all screens. Pass `onSOS` prop to navigate to SOSScreen. The component handles positioning, dialog, vibration, and accessibility labels internally.
+
+```tsx
+// Every screen (except SOSScreen)
+import SOSButton from '../components/SOSButton';
+// ...
+<SOSButton onSOS={onSOS} />
+```
+
+---
+
+### 9.2 Mic Button (Voice Assistant)
+
+**Purpose:** Always-accessible voice input — the primary interaction method for users who prefer not to type.
+
+**Visual Spec:**
+
+| Property | Value |
+|---|---|
+| Shape | Circle |
+| Size | 72 × 72pt (scales with `sf()`) |
+| Color | GiddyUp Gold `#C8963E` (`Colors.primary`) |
+| Icon | `Ionicons "mic"`, 32pt, Black `#000000` (8.6:1 contrast ✅) |
+| Shadow | Gold glow — `shadowColor: Colors.primary`, opacity 0.45, radius 12 |
+| Position | Center of bottom navigation bar, raised 24pt above bar (`marginTop: -24`) |
+
+**Behavior:**
+1. Tap → haptic vibration (60ms)
+2. Opens `VoiceAssistantOverlay` — full-screen voice input UI
+3. Overlay dismisses on completion or cancel → returns user to current screen
+
+**Rules:**
+- Must appear on **every screen that has a bottom navigation bar**
+- Must always be the **center element** of the bottom nav — visually raised above the bar to signal it as the hero action
+- Must be **identical in appearance and behavior** on every screen — do not change icon, color, or size per screen
+- The Mic button is the fastest path to booking a ride — never hide, disable, or remove it
+- Do not place other UI elements that could visually compete with the Mic button in the bottom nav center
+
+**Implementation:** The bottom nav bar (including the Mic button) is implemented inline on screens that include it (e.g., HomeScreen). The `onVoiceMic` prop triggers `VoiceAssistantOverlay` via App.tsx.
+
+---
+
+### 9.3 Checklist — New Screen Review
+
+Before shipping any new screen, verify:
+
+- [ ] `<SOSButton onSOS={onSOS} />` is rendered (unless this is SOSScreen)
+- [ ] SOS button is top-right, not obscured by any header, card, or modal
+- [ ] Bottom nav with Mic button is present (if the screen is part of main app navigation)
+- [ ] Mic button is centered, gold, 72pt circle, raised above nav bar
+- [ ] Both elements appear at all 4 font size tiers without displacement or clipping
+- [ ] Both elements have correct `accessibilityLabel` and `accessibilityHint`
+
+---
+
+## 10. Voice & Tone
 
 ### Personality
 GiddyUp Rides speaks like a **warm, reliable neighbor** — not a corporate app, not a chatbot.
@@ -326,6 +416,8 @@ Include on error screens and help screens. Elderly users prefer calling — make
 | Card radius | 12px |
 | WCAG target | AAA (7:1+) wherever possible |
 | Minimum WCAG | AA (4.5:1 normal, 3:1 large) |
+| **SOS button** | **72pt circle, `#D62828` red, top-right absolute, every screen** |
+| **Mic button** | **72pt circle, `#C8963E` gold, bottom nav center, every screen** |
 
 ---
 

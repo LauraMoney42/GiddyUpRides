@@ -31,6 +31,7 @@ import {
 } from 'react-native';
 import { Colors, FontSize, Radius, Spacing, TouchTarget } from '../constants/theme';
 import SOSButton from '../components/SOSButton';
+import MicFab from '../components/MicFab';
 import { useAccessibility } from '../context/AccessibilityContext';
 // gu-012: Google Maps integration
 import RideMapView, { LatLng, extractVehicleColor } from '../components/RideMapView';
@@ -65,6 +66,7 @@ interface LiveRideScreenProps {
   onRideComplete?: () => void;
   onCancelRide?: () => void;
   onSOS?: () => void;
+  onVoiceMic?: () => void;
 }
 
 // ── Mock data ─────────────────────────────────────────────────────────────────
@@ -97,6 +99,7 @@ export default function LiveRideScreen({
   onRideComplete,
   onCancelRide,
   onSOS,
+  onVoiceMic,
 }: LiveRideScreenProps) {
   const { fontScale } = useAccessibility();
   const sf = (base: number) => Math.round(base * fontScale);
@@ -236,10 +239,10 @@ export default function LiveRideScreen({
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* SOS — always at top-right, above all content — gu-014: wired to SOSScreen */}
-      <View style={styles.sosWrapper}>
-        <SOSButton onSOS={onSOS} />
-      </View>
+      {/* gu-069: SOSButton is self-positioning via safe area insets */}
+      <SOSButton onPress={onSOS ?? (() => {})} />
+      {/* gu-068: MicFab — floating voice assistant, bottom-right */}
+      <MicFab onPress={onVoiceMic} />
 
       <ScrollView
         style={styles.scroll}
@@ -435,12 +438,6 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: Colors.background,
-  },
-  sosWrapper: {
-    position: 'absolute',
-    top: Spacing.lg,
-    right: Spacing.lg,
-    zIndex: 100,
   },
   scroll: {
     flex: 1,

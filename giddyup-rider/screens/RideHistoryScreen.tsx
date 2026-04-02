@@ -6,7 +6,7 @@
 // Rebook button on each completed ride → opens BookingScreen.
 //
 // Accessibility-first:
-//   - 22pt+ fonts, 60pt+ touch targets
+//   - 22pt+ fonts, 60pt+ touch targets, sf() scaling throughout
 //   - Haptic on every tap
 //   - accessibilityLabel + accessibilityHint on all interactive elements
 //   - SOS button always visible, no swipe gestures
@@ -23,6 +23,7 @@ import {
 } from 'react-native';
 import { Colors, FontSize, Radius, Spacing, TouchTarget } from '../constants/theme';
 import SOSButton from '../components/SOSButton';
+import MicFab from '../components/MicFab';
 import { useAccessibility } from '../context/AccessibilityContext';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -150,9 +151,11 @@ const MOCK_RIDE_HISTORY: RideRecord[] = [
 interface RideHistoryScreenProps {
   onBack: () => void;
   onRebook?: (destination: string) => void;
+  onSOS?: () => void;
+  onVoiceMic?: () => void;
 }
 
-export default function RideHistoryScreen({ onBack, onRebook }: RideHistoryScreenProps) {
+export default function RideHistoryScreen({ onBack, onRebook, onSOS, onVoiceMic }: RideHistoryScreenProps) {
   const { fontScale } = useAccessibility();
   const sf = (base: number) => Math.round(base * fontScale);
 
@@ -198,7 +201,7 @@ export default function RideHistoryScreen({ onBack, onRebook }: RideHistoryScree
             accessibilityHint="Returns to the home screen"
             accessibilityRole="button"
           >
-            <Text style={styles.backArrow}>← Back</Text>
+            <Text style={[styles.backArrow, { fontSize: sf(FontSize.sm) }]}>← Back</Text>
           </TouchableOpacity>
           <Text style={[styles.screenTitle, { fontSize: sf(FontSize.lg) }]} numberOfLines={1} adjustsFontSizeToFit>Ride History</Text>
           <View style={styles.backButton} />
@@ -233,7 +236,7 @@ export default function RideHistoryScreen({ onBack, onRebook }: RideHistoryScree
               accessibilityRole="tab"
               accessibilityState={{ selected: filter === tab }}
             >
-              <Text style={[styles.filterTabText, filter === tab && styles.filterTabTextActive]}>
+              <Text style={[styles.filterTabText, filter === tab && styles.filterTabTextActive, { fontSize: sf(FontSize.sm) }]}>
                 {tab === 'all' ? 'All' : tab === 'completed' ? 'Completed' : 'Cancelled'}
               </Text>
             </TouchableOpacity>
@@ -248,19 +251,20 @@ export default function RideHistoryScreen({ onBack, onRebook }: RideHistoryScree
         >
           {filtered.length === 0 ? (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyEmoji}>🚗</Text>
-              <Text style={styles.emptyText}>No rides here yet.</Text>
+              <Text style={[styles.emptyEmoji, { fontSize: sf(FontSize.hero) }]}>🚗</Text>
+              <Text style={[styles.emptyText, { fontSize: sf(FontSize.lg) }]}>No rides here yet.</Text>
             </View>
           ) : (
             filtered.map((ride) => (
-              <RideCard key={ride.id} ride={ride} onRebook={() => handleRebook(ride)} />
+              <RideCard key={ride.id} ride={ride} sf={sf} onRebook={() => handleRebook(ride)} />
             ))
           )}
           <View style={{ height: 120 }} />
         </ScrollView>
 
-        {/* Always-visible SOS */}
-        <SOSButton />
+        {/* gu-069: Always-visible SOS + mic */}
+        <SOSButton onPress={onSOS ?? (() => {})} />
+        <MicFab onPress={onVoiceMic} />
       </View>
     </SafeAreaView>
   );
@@ -268,7 +272,7 @@ export default function RideHistoryScreen({ onBack, onRebook }: RideHistoryScree
 
 // ── Ride Card ─────────────────────────────────────────────────────────────────
 
-function RideCard({ ride, onRebook }: { ride: RideRecord; onRebook: () => void }) {
+function RideCard({ ride, sf, onRebook }: { ride: RideRecord; sf: (n: number) => number; onRebook: () => void }) {
   const isCompleted = ride.status === 'completed';
   const statusColor = isCompleted ? Colors.success : Colors.sos;
   const statusLabel = isCompleted ? '✅ Completed' : '❌ Cancelled';
@@ -278,9 +282,9 @@ function RideCard({ ride, onRebook }: { ride: RideRecord; onRebook: () => void }
       {/* Status badge + date */}
       <View style={styles.rideCardHeader}>
         <View style={[styles.statusBadge, { backgroundColor: statusColor + '18' }]}>
-          <Text style={[styles.statusText, { color: statusColor }]}>{statusLabel}</Text>
+          <Text style={[styles.statusText, { color: statusColor, fontSize: sf(FontSize.xs) }]}>{statusLabel}</Text>
         </View>
-        <Text style={styles.rideDate}>{ride.date} · {ride.timeOfDay}</Text>
+        <Text style={[styles.rideDate, { fontSize: sf(FontSize.xs) }]}>{ride.date} · {ride.timeOfDay}</Text>
       </View>
 
       {/* Route */}
@@ -291,18 +295,18 @@ function RideCard({ ride, onRebook }: { ride: RideRecord; onRebook: () => void }
           <View style={styles.dotRed} />
         </View>
         <View style={styles.routeAddresses}>
-          <Text style={styles.routeAddress} numberOfLines={1}>{ride.pickup}</Text>
-          <Text style={styles.routeAddress} numberOfLines={1}>{ride.destination}</Text>
+          <Text style={[styles.routeAddress, { fontSize: sf(FontSize.base) }]} numberOfLines={1}>{ride.pickup}</Text>
+          <Text style={[styles.routeAddress, { fontSize: sf(FontSize.base) }]} numberOfLines={1}>{ride.destination}</Text>
         </View>
       </View>
 
       {/* Driver + fare row */}
       {isCompleted && (
         <View style={styles.metaRow}>
-          <Text style={styles.metaDriver}>
+          <Text style={[styles.metaDriver, { fontSize: sf(FontSize.sm) }]}>
             👤 {ride.driverName}  ·  {ride.vehicleDescription}
           </Text>
-          <Text style={styles.metaFare}>{ride.fare}</Text>
+          <Text style={[styles.metaFare, { fontSize: sf(FontSize.base) }]}>{ride.fare}</Text>
         </View>
       )}
 
@@ -315,7 +319,7 @@ function RideCard({ ride, onRebook }: { ride: RideRecord; onRebook: () => void }
           accessibilityHint="Opens the booking screen with this destination pre-filled"
           accessibilityRole="button"
         >
-          <Text style={styles.rebookText}>🔁  Rebook This Ride</Text>
+          <Text style={[styles.rebookText, { fontSize: sf(FontSize.base) }]}>🔁  Rebook This Ride</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -350,12 +354,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   backArrow: {
-    fontSize: FontSize.sm,
+    // fontSize set inline via sf() — gu-text-scale
     color: Colors.primary,
     fontWeight: '700',
   },
   screenTitle: {
-    fontSize: FontSize.lg,
+    // fontSize set inline via sf() — gu-text-scale
     color: Colors.textPrimary,
     fontWeight: '800',
     textAlign: 'center',
@@ -374,12 +378,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   summaryNumber: {
-    fontSize: FontSize.xl,
+    // fontSize set inline via sf() — gu-text-scale
     color: '#000000', // Black on gold strip — WCAG AAA
     fontWeight: '900',
   },
   summaryLabel: {
-    fontSize: FontSize.xs,
+    // fontSize set inline via sf() — gu-text-scale
     color: 'rgba(0,0,0,0.65)',
     fontWeight: '600',
     marginTop: 2,
@@ -412,7 +416,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary + '18',
   },
   filterTabText: {
-    fontSize: FontSize.sm,
+    // fontSize set inline via sf() — gu-text-scale
     color: Colors.textSecondary,
     fontWeight: '600',
   },
@@ -455,11 +459,11 @@ const styles = StyleSheet.create({
     borderRadius: Radius.sm,
   },
   statusText: {
-    fontSize: FontSize.xs,
+    // fontSize set inline via sf() — gu-text-scale
     fontWeight: '700',
   },
   rideDate: {
-    fontSize: FontSize.xs,
+    // fontSize set inline via sf() — gu-text-scale
     color: Colors.textSecondary,
     fontWeight: '500',
   },
@@ -497,7 +501,7 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   routeAddress: {
-    fontSize: FontSize.base,
+    // fontSize set inline via sf() — gu-text-scale
     color: Colors.textPrimary,
     fontWeight: '600',
   },
@@ -509,12 +513,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   metaDriver: {
-    fontSize: FontSize.sm,
+    // fontSize set inline via sf() — gu-text-scale
     color: Colors.textSecondary,
     flex: 1,
   },
   metaFare: {
-    fontSize: FontSize.base,
+    // fontSize set inline via sf() — gu-text-scale
     color: Colors.primary,
     fontWeight: '800',
     marginLeft: Spacing.sm,
@@ -530,7 +534,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   rebookText: {
-    fontSize: FontSize.base,
+    // fontSize set inline via sf() — gu-text-scale
     color: '#000000', // Black on gold — WCAG AAA
     fontWeight: '800',
   },
@@ -542,10 +546,10 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   emptyEmoji: {
-    fontSize: FontSize.hero,
+    // fontSize set inline via sf() — gu-text-scale
   },
   emptyText: {
-    fontSize: FontSize.lg,
+    // fontSize set inline via sf() — gu-text-scale
     color: Colors.textSecondary,
     fontWeight: '600',
   },

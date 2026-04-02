@@ -33,7 +33,7 @@
  *   8. favoritesSetup            → FavoritesSetupScreen          (gu-onboarding-favorites-001, skippable)
  *   9. mobilitySetup             → MobilitySetupScreen          (gu-029, skippable)
  *  10. notificationPermission    → NotificationPermissionScreen  (gu-033, skippable)
- *  10. home                      → HomeScreen
+ *  11. home                      → HomeScreen
  *
  * Post-onboarding screens:
  *   booking         → BookingScreen → liveRide
@@ -50,6 +50,8 @@
 import { StatusBar } from 'expo-status-bar';
 import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useFonts } from 'expo-font';
+import { Rye_400Regular } from '@expo-google-fonts/rye'; // gu-052: western slab-serif for splash title
 import { AccessibilityProvider, useAccessibility } from './context/AccessibilityContext';
 import WelcomeSplashScreen from './screens/onboarding/WelcomeSplashScreen';
 import OnboardingSlides from './screens/onboarding/OnboardingSlides';
@@ -72,6 +74,7 @@ import NotificationPermissionScreen from './screens/onboarding/NotificationPermi
 import VoiceAssistantOverlay, { VoiceIntent } from './components/VoiceAssistantOverlay'; // gu-028
 import { listenForNotificationTaps, setupAndroidChannel } from './services/NotificationService'; // gu-033
 import { Colors } from './constants/theme';
+import { SafeAreaProvider } from 'react-native-safe-area-context'; // gu-069: required for useSafeAreaInsets in SOSButton/MicButton
 
 type Screen =
   | 'splash' | 'slides' | 'textSize' | 'readAloud' | 'legalDisclaimer'
@@ -80,7 +83,8 @@ type Screen =
   | 'home' | 'booking' | 'liveRide' | 'sos' | 'history' | 'settings'
   | 'scheduleRide' | 'scheduledRides'  // gu-018
   | 'emergencyContacts'                // gu-019 — settings edit
-  | 'mobilitySettings';                // gu-029 — edit from Settings
+  | 'mobilitySettings'                 // gu-029 — edit from Settings
+  | 'favoritesSettings';               // gu-onboarding-favorites-001 — edit from Settings
 
 // gu-018: Seed mock data so ScheduledRidesScreen isn't empty on first visit
 const MOCK_SEED_RIDES: ScheduledRide[] = [
@@ -101,6 +105,13 @@ function RootNavigator() {
   // gu-044: HomeScreen bottom nav mic → open VoiceAssistantOverlay programmatically
   // Incrementing this counter triggers the overlay's openTrigger useEffect.
   const [voiceTrigger, setVoiceTrigger] = useState(0);
+
+  // gu-fav-prefill-001: Store destination chosen from HomeScreen favorites
+  // so BookingScreen can pre-fill the destination input.
+  const bookingDestRef = useRef<string>('');
+  // gu-070: when a Favorite with a saved address is tapped, skip BookingScreen
+  // step 1 (destination picker) and go straight to step 2 (driver selection).
+  const bookingSkipStepRef = useRef<boolean>(false);
 
   // gu-033: Set up Android notification channel + register tap deep-link listener
   useEffect(() => {
@@ -170,7 +181,8 @@ function RootNavigator() {
       {screen === 'home' && (
         <HomeScreen
           userName={userName}
-          onBookRide={() => setScreen('booking')}
+          onBookRide={() => { bookingDestRef.current = ''; bookingSkipStepRef.current = false; setScreen('booking'); }}
+          onBookRideTo={(dest, skip) => { bookingDestRef.current = dest; bookingSkipStepRef.current = skip ?? false; setScreen('booking'); }} // gu-070
           onSettings={() => setScreen('settings')}
           onViewHistory={() => setScreen('history')}
           onScheduleRide={() => setScreen('scheduleRide')}
@@ -181,10 +193,17 @@ function RootNavigator() {
       )}
 
       {screen === 'booking' && (
-        <BookingScreen onBack={() => setScreen('home')} onRideConfirmed={() => setScreen('liveRide')} onSOS={goSOS} />
+        <BookingScreen
+          onBack={() => setScreen('home')}
+          onRideConfirmed={() => setScreen('liveRide')}
+          onSOS={goSOS}
+          initialDestination={bookingDestRef.current}
+          skipDestinationStep={bookingSkipStepRef.current} // gu-070
+          onVoiceMic={() => setVoiceTrigger(n => n + 1)} // gu-066: bottom nav mic
+        />
       )}
       {screen === 'liveRide' && (
-        <LiveRideScreen onRideComplete={() => setScreen('home')} onCancelRide={() => setScreen('home')} onSOS={goSOS} />
+        <LiveRideScreen onRideComplete={() => setScreen('home')} onCancelRide={() => setScreen('home')} onSOS={goSOS} onVoiceMic={() => setVoiceTrigger(n => n + 1)} />
       )}
 
       {/* gu-018: Schedule a ride in advance */}
@@ -196,6 +215,7 @@ function RootNavigator() {
             setScreen('scheduledRides');
           }}
           onSOS={goSOS}
+          onVoiceMic={() => setVoiceTrigger(n => n + 1)}
         />
       )}
 
@@ -207,6 +227,7 @@ function RootNavigator() {
           onScheduleNew={() => setScreen('scheduleRide')}
           onBack={() => setScreen('home')}
           onSOS={goSOS}
+          onVoiceMic={() => setVoiceTrigger(n => n + 1)}
         />
       )}
 
@@ -214,7 +235,12 @@ function RootNavigator() {
         <SOSScreen userName={userName} onDismiss={() => setScreen(prevScreenRef.current)} />
       )}
       {screen === 'history' && (
-        <RideHistoryScreen onBack={() => setScreen('home')} onRebook={() => setScreen('booking')} />
+        <RideHistoryScreen
+          onBack={() => setScreen('home')}
+          onRebook={(dest) => { bookingDestRef.current = dest ?? ''; setScreen('booking'); }}
+          onSOS={goSOS}
+          onVoiceMic={() => setVoiceTrigger(n => n + 1)}
+        />
       )}
       {screen === 'settings' && (
         <SettingsScreen
@@ -223,6 +249,9 @@ function RootNavigator() {
           onSignOut={() => setScreen('splash')}
           onEmergencyContacts={() => setScreen('emergencyContacts')}
           onMobilitySettings={() => setScreen('mobilitySettings')}
+          onFavoriteSettings={() => setScreen('favoritesSettings')}
+          onSOS={goSOS}
+          onVoiceMic={() => setVoiceTrigger(n => n + 1)}
         />
       )}
       {/* gu-019: Emergency contact setup */}
@@ -236,14 +265,21 @@ function RootNavigator() {
           onBack={() => setScreen('settings')}
         />
       )}
+      {/* gu-onboarding-favorites-001: Edit favorite places from Settings */}
+      {screen === 'favoritesSettings' && (
+        <FavoritesSetupScreen
+          onDone={() => setScreen('settings')}
+          onBack={() => setScreen('settings')}
+        />
+      )}
 
       {/* gu-028: Global voice assistant — floating mic on all post-onboarding screens.
-           gu-044: hideFab=true on HomeScreen (bottom nav replaces the FAB there).
-                   openTrigger fires the overlay when HomeScreen bottom nav mic is tapped. */}
-      {!['splash', 'textSize', 'readAloud', 'legalDisclaimer', 'slides', 'emergencyContactOnboarding', 'nameSetup', 'favoritesSetup', 'mobilitySetup', 'notificationPermission'].includes(screen) && (
+           gu-068: All screens with per-screen MicFab use hideFab=true + openTrigger.
+           gu-068: 'sos' excluded entirely — no mic on any SOS/emergency screen. */}
+      {!['splash', 'textSize', 'readAloud', 'legalDisclaimer', 'slides', 'emergencyContactOnboarding', 'nameSetup', 'favoritesSetup', 'mobilitySetup', 'notificationPermission', 'sos'].includes(screen) && (
         <VoiceAssistantOverlay
           onIntent={handleVoiceIntent}
-          hideFab={screen === 'home'}
+          hideFab={['home', 'settings', 'booking', 'scheduleRide', 'scheduledRides', 'liveRide', 'history', 'emergencyContacts'].includes(screen)}
           openTrigger={voiceTrigger}
         />
       )}
@@ -252,10 +288,16 @@ function RootNavigator() {
 }
 
 export default function App() {
+  // gu-052: Block render until Rye font is loaded — prevents FOUT on splash screen
+  const [fontsLoaded] = useFonts({ Rye_400Regular });
+  if (!fontsLoaded) return null;
+
   return (
-    <AccessibilityProvider>
-      <RootNavigator />
-    </AccessibilityProvider>
+    <SafeAreaProvider>
+      <AccessibilityProvider>
+        <RootNavigator />
+      </AccessibilityProvider>
+    </SafeAreaProvider>
   );
 }
 

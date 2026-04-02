@@ -21,13 +21,17 @@ import {
 } from 'react-native';
 import { Colors, Spacing, Radius, TouchTarget, FontSize } from '../../constants/theme';
 import { useAccessibility } from '../../context/AccessibilityContext';
+import SOSButton from '../../components/SOSButton';
+import MicFab from '../../components/MicFab';
 
 interface Props {
   onDone: () => void;
   onBack: () => void;
+  onSOS?: () => void;
+  onVoiceMic?: () => void;
 }
 
-export default function NameSetupScreen({ onDone, onBack }: Props) {
+export default function NameSetupScreen({ onDone, onBack, onSOS, onVoiceMic }: Props) {
   const { prefs, setUserName, fontScale } = useAccessibility();
   const [name, setName] = useState(prefs.userName ?? '');
   const [hasError, setHasError] = useState(false);
@@ -135,6 +139,9 @@ export default function NameSetupScreen({ onDone, onBack }: Props) {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      {/* gu-069: SOS + mic always visible */}
+      <SOSButton onPress={onSOS ?? (() => {})} />
+      <MicFab onPress={onVoiceMic} />
     </SafeAreaView>
   );
 }

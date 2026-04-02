@@ -22,6 +22,7 @@ import {
 } from 'react-native';
 import { Colors, FontSize, Radius, Spacing, TouchTarget } from '../constants/theme';
 import SOSButton from '../components/SOSButton';
+import MicFab from '../components/MicFab';
 import { useAccessibility } from '../context/AccessibilityContext';
 import { ScheduledRide } from './ScheduleRideScreen';
 
@@ -33,6 +34,7 @@ interface Props {
   onScheduleNew: () => void;
   onBack: () => void;
   onSOS?: () => void;
+  onVoiceMic?: () => void;
 }
 
 // ── Main screen ───────────────────────────────────────────────────────────────
@@ -43,6 +45,7 @@ export default function ScheduledRidesScreen({
   onScheduleNew,
   onBack,
   onSOS,
+  onVoiceMic,
 }: Props) {
   const { fontScale } = useAccessibility();
   const sf = (base: number) => Math.round(base * fontScale);
@@ -144,6 +147,7 @@ export default function ScheduledRidesScreen({
         </ScrollView>
 
         <SOSButton onSOS={onSOS} />
+        <MicFab onPress={onVoiceMic} />
       </View>
     </SafeAreaView>
   );

@@ -45,7 +45,8 @@
           "sounds": [],
           "iosDisplayInForeground": true
         }
-      ]
+      ],
+      "expo-font"
     ]
   }
 }

@@ -57,7 +57,13 @@ export default function WelcomeSplashScreen({ onGetStarted }: Props) {
         >
           {/* Horse emoji stands in for the real western logo asset */}
           <Text style={[styles.horseEmoji, { fontSize: sf(60) }]}>🐴</Text>
-          <Text style={[styles.brandName, { fontSize: sf(FontSize.hero) }]}>GIDDY-UP</Text>
+          {/* gu-072: \u2011 = non-breaking hyphen — prevents wrap at hyphen.
+               numberOfLines={1} + adjustsFontSizeToFit = safety net on narrow screens. */}
+          <Text
+            style={[styles.brandName, { fontSize: sf(FontSize.hero) }]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+          >{`GIDDY\u2011UP`}</Text>
           <Text style={[styles.brandSub, { fontSize: sf(FontSize.xl) }]}>RIDES</Text>
           {/* Decorative western divider */}
           <View style={styles.dividerRow}>
@@ -121,19 +127,21 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.xl,
   },
   horseEmoji: {
-    fontSize: FontSize.hero, // intentionally large — splash screen brand hero element
+    fontSize: 120, // gu-055: true hero size — larger than FontSize.hero for splash impact
     marginBottom: Spacing.md,
   },
   brandName: {
     fontSize: FontSize.xxl,
-    fontWeight: '900',
+    fontFamily: 'Rye_400Regular', // gu-052: western slab-serif to match logo style
     color: Colors.primary,        // Gold — brand accent on dark navy bg ✅
     letterSpacing: 6,
+    textAlign: 'center',
+    alignSelf: 'stretch',         // gu-072: gives adjustsFontSizeToFit a width boundary
   },
   brandSub: {
     fontSize: FontSize.base,
-    fontWeight: '700',
-    color: 'rgba(200,150,62,0.80)',  // Gold at 80% opacity on navy ✅
+    fontFamily: 'Rye_400Regular', // gu-052: match GIDDY-UP western style
+    color: Colors.primary,  // gu-053: full gold — matches brandName exactly ✅
     letterSpacing: 10,
     marginTop: -4,
   },

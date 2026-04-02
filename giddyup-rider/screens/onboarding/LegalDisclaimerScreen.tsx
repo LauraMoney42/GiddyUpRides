@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
   },
 
   heroEmoji: {
-    fontSize: FontSize.hero, // decorative hero emoji
+    fontSize: 80, // gu-054: bumped from FontSize.hero (48) — large hero display size
     textAlign: 'center',
     marginBottom: Spacing.sm,
   },

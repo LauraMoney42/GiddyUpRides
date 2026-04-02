@@ -13,7 +13,7 @@
 //   - Plain language, large text, no swipes
 //   - SOS button always visible
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -27,8 +27,10 @@ import {
   ActivityIndicator,
   Modal,
 } from 'react-native';
+import * as Location from 'expo-location';
 import { Colors, FontSize, Radius, Spacing, TouchTarget } from '../constants/theme';
 import SOSButton from '../components/SOSButton';
+import MicFab from '../components/MicFab';
 import { useAccessibility } from '../context/AccessibilityContext';
 import { Ionicons } from '@expo/vector-icons';
 // gu-034: Guarded import — static import crashes Expo Go (native module absent).
@@ -129,11 +131,22 @@ interface BookingScreenProps {
   onBack: () => void;
   onRideConfirmed?: (driver: MockDriver, destination: string) => void;
   onSOS?: () => void;
+  /** gu-fav-prefill-001: Pre-fill destination from HomeScreen favorites tap */
+  initialDestination?: string;
+  /**
+   * gu-070: When true (Favorite with a real saved address was tapped),
+   * skip step 1 (destination picker) and open directly on step 2 (driver selection).
+   * Requires initialDestination to be non-empty — guarded at initialisation.
+   */
+  skipDestinationStep?: boolean;
+  onVoiceMic?: () => void;  // gu-066: bottom nav mic
 }
 
-export default function BookingScreen({ onBack, onRideConfirmed, onSOS }: BookingScreenProps) {
+export default function BookingScreen({ onBack, onRideConfirmed, onSOS, initialDestination = '', skipDestinationStep = false, onVoiceMic }: BookingScreenProps) {
+  // Always start at step 1 (destination) so user sees From/To/swap card.
+  // skipDestinationStep reserved for future use; gu-070+071 unified spec shows step 1.
   const [step, setStep]               = useState<BookingStep>('destination');
-  const [destination, setDestination] = useState('');
+  const [destination, setDestination] = useState(initialDestination);
   const [selectedDriver, setDriver]   = useState<MockDriver | null>(null);
   const [searching, setSearching]     = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -170,8 +183,8 @@ export default function BookingScreen({ onBack, onRideConfirmed, onSOS }: Bookin
 
   function handleBack() {
     Vibration.vibrate(30);
-    if (step === 'confirm')    { setStep('drivers');     return; }
-    if (step === 'drivers')    { setStep('destination'); return; }
+    if (step === 'confirm')  { setStep('drivers');     return; }
+    if (step === 'drivers')  { setStep('destination'); return; }
     onBack();
   }
 
@@ -179,7 +192,7 @@ export default function BookingScreen({ onBack, onRideConfirmed, onSOS }: Bookin
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.root}>
+      <View style={styles.outerRoot}>
 
         {/* ── Top bar ───────────────────────────────────────────────────── */}
         <View style={styles.topBar}>
@@ -210,6 +223,7 @@ export default function BookingScreen({ onBack, onRideConfirmed, onSOS }: Bookin
             onChangeDestination={setDestination}
             onConfirm={handleDestinationConfirm}
             searching={searching}
+            initialDestination={initialDestination}
           />
         )}
 
@@ -267,6 +281,10 @@ export default function BookingScreen({ onBack, onRideConfirmed, onSOS }: Bookin
             </View>
           </View>
         </Modal>
+
+        {/* gu-068: Mic moved to floating MicFab (bottom-right) — bottom nav removed */}
+        <MicFab onPress={onVoiceMic} />
+
       </View>
     </SafeAreaView>
   );
@@ -310,20 +328,60 @@ function DestinationStep({
   onChangeDestination,
   onConfirm,
   searching,
+  initialDestination = '',
 }: {
   destination: string;
   onChangeDestination: (v: string) => void;
   onConfirm: () => void;
   searching: boolean;
+  /** gu-070/071: When non-empty, a Favorite was tapped — hide saved places + common destinations */
+  initialDestination?: string;
 }) {
-  const { fontScale } = useAccessibility();
+  const { fontScale, prefs } = useAccessibility();
   const sf = (base: number) => Math.round(base * fontScale);
 
-  // ── Autocomplete state ─────────────────────────────────────────────────
-  const [suggestions, setSuggestions]           = useState<PlaceSuggestion[]>([]);
-  const [showDropdown, setShowDropdown]         = useState(false);
+  // ── "To" autocomplete state ────────────────────────────────────────────
+  const [suggestions, setSuggestions]               = useState<PlaceSuggestion[]>([]);
+  const [showDropdown, setShowDropdown]             = useState(false);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ── "From" (pickup) state ──────────────────────────────────────────────
+  // gu-071: default to "Current Location"; GPS resolves to real address on mount
+  const [pickup, setPickup]                             = useState('Current Location');
+  const [pickupSuggestions, setPickupSuggestions]       = useState<PlaceSuggestion[]>([]);
+  const [showPickupDropdown, setShowPickupDropdown]     = useState(false);
+  const [loadingPickup, setLoadingPickup]               = useState(false);
+  const pickupDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // gu-062: "selecting" refs — set true on onTouchStart of a suggestion row so the
+  // onBlur timer knows the user is mid-tap and must not clear the dropdown.
+  const selectingDestRef   = useRef(false);
+  const selectingPickupRef = useRef(false);
+
+  // gu-071: resolve GPS → readable address on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') return;
+        const pos = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        const [place] = await Location.reverseGeocodeAsync(pos.coords);
+        if (place) {
+          const parts = [
+            place.streetNumber,
+            place.street,
+            place.city,
+          ].filter(Boolean);
+          if (parts.length > 0) setPickup(parts.join(' '));
+        }
+      } catch {
+        // GPS unavailable — keep "Current Location" as display text
+      }
+    })();
+  }, []);
 
   // ── Voice state ────────────────────────────────────────────────────────
   const [isListening, setIsListening] = useState(false);
@@ -408,6 +466,51 @@ function DestinationStep({
     setShowDropdown(false);
   };
 
+  // ── Pickup ("From") autocomplete ────────────────────────────────────────
+  const fetchPickupSuggestions = async (query: string) => {
+    const key = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ?? '';
+    if (!key || query.trim().length < 3) {
+      setPickupSuggestions([]);
+      setShowPickupDropdown(false);
+      return;
+    }
+    setLoadingPickup(true);
+    try {
+      const url =
+        `https://maps.googleapis.com/maps/api/place/autocomplete/json` +
+        `?input=${encodeURIComponent(query)}&key=${key}&language=en`;
+      const res  = await fetch(url);
+      const data: { predictions?: PlaceSuggestion[] } = await res.json();
+      if (data.predictions?.length) {
+        setPickupSuggestions(data.predictions.slice(0, 5));
+        setShowPickupDropdown(true);
+      } else {
+        setPickupSuggestions([]);
+        setShowPickupDropdown(false);
+      }
+    } catch {
+      setPickupSuggestions([]);
+      setShowPickupDropdown(false);
+    } finally {
+      setLoadingPickup(false);
+    }
+  };
+
+  const handlePickupChange = (text: string) => {
+    setPickup(text);
+    setShowDropdown(false); // close "To" dropdown while editing "From"
+    if (!text.trim()) { setPickupSuggestions([]); setShowPickupDropdown(false); return; }
+    if (pickupDebounceTimer.current) clearTimeout(pickupDebounceTimer.current);
+    pickupDebounceTimer.current = setTimeout(() => fetchPickupSuggestions(text), 400);
+  };
+
+  const handlePickupSelect = (pred: PlaceSuggestion) => {
+    Vibration.vibrate(30);
+    setPickup(pred.description);
+    setPickupSuggestions([]);
+    setShowPickupDropdown(false);
+  };
+
   // ── Voice ──────────────────────────────────────────────────────────────
   const handleMicPress = async () => {
     // gu-034: Native module unavailable in Expo Go — show mock demo instead
@@ -465,52 +568,151 @@ function DestinationStep({
       contentContainerStyle={styles.stepContent}
       keyboardShouldPersistTaps="handled"
     >
-      <Text style={styles.stepHeading}>Where are you going?</Text>
-      <Text style={styles.stepSubheading}>Type an address, speak it, or tap a common destination below.</Text>
+      <Text style={styles.stepHeading}>Book your ride</Text>
+      <Text style={styles.stepSubheading}>Set your pickup and drop-off locations below.</Text>
 
-      {/* Address input row + mic button side by side */}
-      <View style={styles.inputRow}>
-        <TextInput
-          style={[styles.addressInput, isListening && styles.addressInputListening]}
-          value={isListening ? (voiceInterim || '🎤 Listening…') : destination}
-          onChangeText={handleTextChange}
-          placeholder="Enter address or place name…"
-          placeholderTextColor={Colors.textSecondary}
-          autoCorrect={false}
-          returnKeyType="search"
-          onSubmitEditing={() => { setShowDropdown(false); onConfirm(); }}
-          onFocus={() => {
-            if (destination.trim().length >= 3) fetchSuggestions(destination);
-          }}
-          onBlur={() => {
-            // Small delay so tapping a suggestion registers before dropdown hides
-            setTimeout(() => setShowDropdown(false), 250);
-          }}
-          editable={!isListening}
-          accessibilityLabel="Destination address"
-          accessibilityHint="Type where you want to go, or tap the microphone to speak"
-        />
+      {/* gu-071: From / To card */}
+      <View style={styles.routeCard}>
 
-        {/* Mic button */}
+        {/* FROM row */}
+        <View style={styles.routeRow}>
+          <View style={[styles.routeDotOuter, styles.routeDotPickup]}>
+            <View style={styles.routeDotInner} />
+          </View>
+          <View style={styles.routeFieldWrap}>
+            <Text style={[styles.routeFieldLabel, { fontSize: sf(11) }]}>FROM</Text>
+            <TextInput
+              style={[styles.routeInput, { fontSize: sf(FontSize.sm) }]}
+              value={pickup}
+              onChangeText={handlePickupChange}
+              placeholder="Current Location"
+              placeholderTextColor={Colors.textSecondary}
+              autoCorrect={false}
+              returnKeyType="next"
+              onFocus={() => {
+                setShowDropdown(false);
+                if (pickup.trim().length >= 3) fetchPickupSuggestions(pickup);
+              }}
+              onBlur={() => setTimeout(() => {
+                if (!selectingPickupRef.current) setShowPickupDropdown(false);
+                selectingPickupRef.current = false; // reset after each blur cycle
+              }, 200)}
+              accessibilityLabel="Pickup location"
+              accessibilityHint="Where should the driver pick you up? Defaults to your current location."
+            />
+          </View>
+        </View>
+
+        {/* ⇅ Swap button — swaps From and To values, like Google Maps */}
         <TouchableOpacity
-          style={[styles.micButton, isListening && styles.micButtonActive]}
-          onPress={handleMicPress}
-          activeOpacity={0.75}
+          style={styles.swapBtn}
+          onPress={() => {
+            Vibration.vibrate(30);
+            const prevPickup = pickup;
+            const prevDest   = destination;
+            setPickup(prevDest);
+            onChangeDestination(prevPickup);
+            // Clear both dropdowns after swap
+            setSuggestions([]);
+            setShowDropdown(false);
+            setPickupSuggestions([]);
+            setShowPickupDropdown(false);
+          }}
           accessibilityRole="button"
-          accessibilityLabel={isListening ? 'Stop voice input' : 'Speak your destination'}
-          accessibilityHint={isListening ? 'Tap to stop listening' : 'Tap and speak your destination address'}
+          accessibilityLabel="Swap pickup and destination"
+          accessibilityHint="Switches your From and To addresses"
+          activeOpacity={0.7}
         >
-          <Ionicons
-            name={isListening ? 'mic' : 'mic-outline'}
-            size={sf(24)}
-            color={isListening ? '#fff' : Colors.primary}
-          />
+          <Text style={[styles.swapBtnText, { fontSize: sf(FontSize.base) }]}>⇅</Text>
         </TouchableOpacity>
+
+        {/* TO row */}
+        <View style={styles.routeRow}>
+          <View style={[styles.routeDotOuter, styles.routeDotDest]}>
+            <View style={styles.routeDotInner} />
+          </View>
+          <View style={styles.routeFieldWrap}>
+            <Text style={[styles.routeFieldLabel, { fontSize: sf(11) }]}>TO</Text>
+            <TextInput
+              style={[
+                styles.routeInput,
+                isListening && styles.routeInputListening,
+                { fontSize: sf(FontSize.sm) },
+              ]}
+              value={isListening ? (voiceInterim || '🎤 Listening…') : destination}
+              onChangeText={handleTextChange}
+              placeholder="Enter address or place name…"
+              placeholderTextColor={Colors.textSecondary}
+              autoCorrect={false}
+              returnKeyType="search"
+              onSubmitEditing={() => { setShowDropdown(false); onConfirm(); }}
+              onFocus={() => {
+                setShowPickupDropdown(false);
+                if (destination.trim().length >= 3) fetchSuggestions(destination);
+              }}
+              onBlur={() => setTimeout(() => {
+                if (!selectingDestRef.current) setShowDropdown(false);
+                selectingDestRef.current = false; // reset after each blur cycle
+              }, 200)}
+              editable={!isListening}
+              accessibilityLabel="Destination address"
+              accessibilityHint="Type where you want to go, or tap the microphone to speak"
+            />
+          </View>
+        </View>
       </View>
 
-      {/* Autocomplete dropdown */}
+      {/* Pickup autocomplete dropdown */}
+      {showPickupDropdown && pickupSuggestions.length > 0 && (
+        <View
+          style={styles.dropdownCard}
+          onStartShouldSetResponderCapture={() => {
+            // gu-062: capture phase fires before blur/responder change — sets flag
+            // so the onBlur 200ms timer knows NOT to close the dropdown mid-tap.
+            selectingPickupRef.current = true;
+            return false; // don't capture — let child TouchableOpacity respond
+          }}
+        >
+          {pickupSuggestions.map((pred, idx) => (
+            <TouchableOpacity
+              key={pred.place_id}
+              style={[
+                styles.suggestionRow,
+                idx === pickupSuggestions.length - 1 && styles.suggestionRowLast,
+              ]}
+              onPress={() => handlePickupSelect(pred)}
+              accessibilityRole="button"
+              accessibilityLabel={pred.description}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.suggestionMain, { fontSize: sf(FontSize.sm) }]} numberOfLines={1}>
+                {pred.structured_formatting.main_text}
+              </Text>
+              {!!pred.structured_formatting.secondary_text && (
+                <Text style={[styles.suggestionSub, { fontSize: sf(14) }]} numberOfLines={1}>
+                  {pred.structured_formatting.secondary_text}
+                </Text>
+              )}
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+      {loadingPickup && !showPickupDropdown && (
+        <ActivityIndicator color={Colors.primary} size="small"
+          style={{ marginBottom: Spacing.sm, alignSelf: 'flex-start' }} />
+      )}
+
+      {/* Destination ("To") autocomplete dropdown */}
       {showDropdown && suggestions.length > 0 && (
-        <View style={styles.dropdownCard}>
+        <View
+          style={styles.dropdownCard}
+          onStartShouldSetResponderCapture={() => {
+            // gu-062: capture phase fires before blur/responder change — sets flag
+            // so the onBlur 200ms timer knows NOT to close the dropdown mid-tap.
+            selectingDestRef.current = true;
+            return false; // don't capture — let child TouchableOpacity respond
+          }}
+        >
           {suggestions.map((pred, idx) => (
             <TouchableOpacity
               key={pred.place_id}
@@ -551,26 +753,67 @@ function DestinationStep({
         />
       )}
 
-      {/* Quick-tap presets */}
-      <Text style={styles.presetsLabel}>Common Destinations</Text>
-      {PRESET_DESTINATIONS.map((preset) => (
-        <TouchableOpacity
-          key={preset.address}
-          style={styles.presetButton}
-          onPress={() => {
-            Vibration.vibrate(30);
-            onChangeDestination(preset.address);
-            setSuggestions([]);
-            setShowDropdown(false);
-          }}
-          accessibilityLabel={preset.label.replace(/[^a-zA-Z ]/g, '').trim()}
-          accessibilityHint={`Sets destination to ${preset.address}`}
-          accessibilityRole="button"
-        >
-          <Text style={styles.presetLabel}>{preset.label}</Text>
-          <Text style={styles.presetAddress}>{preset.address}</Text>
-        </TouchableOpacity>
-      ))}
+      {/* gu-070/071: Hide saved places + common destinations when destination pre-filled from a Favorite tap */}
+      {!initialDestination.trim() && (
+        <>
+          {/* gu-onboarding-favorites-001: Saved favorites — shown first when set */}
+          {(() => {
+            const fav = prefs.favoriteAddresses;
+            const saved = [
+              { emoji: '🏠', label: 'Home',     address: fav.home    },
+              { emoji: '🛒', label: 'Grocery',  address: fav.grocery },
+              { emoji: '🌳', label: 'Park',     address: fav.park    },
+              { emoji: '🏥', label: 'Doctor',   address: fav.doctor  },
+            ].filter(f => f.address.trim().length > 0);
+
+            if (saved.length === 0) return null;
+            return (
+              <>
+                <Text style={styles.presetsLabel}>My Saved Places</Text>
+                {saved.map((fav) => (
+                  <TouchableOpacity
+                    key={fav.label}
+                    style={[styles.presetButton, styles.savedFavButton]}
+                    onPress={() => {
+                      Vibration.vibrate(30);
+                      onChangeDestination(fav.address);
+                      setSuggestions([]);
+                      setShowDropdown(false);
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${fav.label}: ${fav.address}`}
+                    accessibilityHint={`Sets destination to your saved ${fav.label.toLowerCase()} address`}
+                  >
+                    <Text style={styles.presetLabel}>{fav.emoji}  {fav.label}</Text>
+                    <Text style={styles.presetAddress}>{fav.address}</Text>
+                  </TouchableOpacity>
+                ))}
+              </>
+            );
+          })()}
+
+          {/* Quick-tap presets */}
+          <Text style={styles.presetsLabel}>Common Destinations</Text>
+          {PRESET_DESTINATIONS.map((preset) => (
+            <TouchableOpacity
+              key={preset.address}
+              style={styles.presetButton}
+              onPress={() => {
+                Vibration.vibrate(30);
+                onChangeDestination(preset.address);
+                setSuggestions([]);
+                setShowDropdown(false);
+              }}
+              accessibilityLabel={preset.label.replace(/[^a-zA-Z ]/g, '').trim()}
+              accessibilityHint={`Sets destination to ${preset.address}`}
+              accessibilityRole="button"
+            >
+              <Text style={styles.presetLabel}>{preset.label}</Text>
+              <Text style={styles.presetAddress}>{preset.address}</Text>
+            </TouchableOpacity>
+          ))}
+        </>
+      )}
 
       {/* Find drivers button */}
       <TouchableOpacity
@@ -775,9 +1018,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  root: {
+  outerRoot: {
     flex: 1,
   },
+
+  // gu-068: bottomNav/bottomNavMic removed — mic is now MicFab floating bottom-right
 
   // Top bar
   topBar: {
@@ -901,7 +1146,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.md,
-    fontSize: FontSize.base,
+    // gu-042: fontSize removed from style — set inline via sf() so it scales with text-size preference
     color: Colors.textPrimary,
     minHeight: TouchTarget.min,
   },
@@ -909,21 +1154,84 @@ const styles = StyleSheet.create({
     borderColor: Colors.sos,
     color: Colors.sos,
   },
-  micButton: {
-    width: TouchTarget.min,
-    height: TouchTarget.min,
-    borderRadius: Radius.md,
-    borderWidth: 2,
-    borderColor: Colors.primary,
+
+  // gu-071: From / To route card
+  routeCard: {
     backgroundColor: Colors.surface,
+    borderRadius: Radius.lg,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    marginBottom: Spacing.sm,
+    gap: 0,
+  },
+  routeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.sm,
+    gap: Spacing.md,
+  },
+  // ⇅ swap button — sits between FROM and TO rows
+  swapBtn: {
+    alignSelf: 'flex-end',   // right-aligned so it doesn't crowd the dot column
+    marginRight: 0,
+    marginLeft: 'auto',
+    minWidth: TouchTarget.min,
+    minHeight: TouchTarget.min,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.surface,
+    borderWidth: 1.5,
+    borderColor: Colors.primary,
+    borderRadius: Radius.md,
+    marginVertical: -4,      // tucks between rows with slight overlap
+    zIndex: 1,
+    paddingHorizontal: Spacing.md,
+  },
+  swapBtnText: {
+    color: Colors.primary,
+    fontWeight: '800',
+  },
+  routeDotOuter: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
   },
-  micButtonActive: {
-    backgroundColor: Colors.sos,
-    borderColor: Colors.sos,
+  routeDotPickup: {
+    backgroundColor: '#2E7D32', // green — pickup
   },
+  routeDotDest: {
+    backgroundColor: Colors.primary, // gold — destination
+  },
+  routeDotInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#FFFFFF',
+  },
+  routeFieldWrap: {
+    flex: 1,
+    gap: 2,
+  },
+  routeFieldLabel: {
+    color: Colors.textSecondary,
+    fontWeight: '700',
+    letterSpacing: 0.6,
+  },
+  routeInput: {
+    color: Colors.textPrimary,
+    paddingVertical: 4,
+    minHeight: 32,
+  },
+  routeInputListening: {
+    color: Colors.sos,
+  },
+
+  // gu-068: micButton/micButtonActive removed — inline mic replaced by MicFab
   dropdownCard: {
     backgroundColor: Colors.surface,
     borderRadius: Radius.md,
@@ -973,6 +1281,11 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     minHeight: TouchTarget.min,
     justifyContent: 'center',
+  },
+  // gu-onboarding-favorites-001: saved favorites get a gold accent border
+  savedFavButton: {
+    borderColor: Colors.primary,
+    borderWidth: 1.5,
   },
   presetLabel: {
     fontSize: FontSize.base,

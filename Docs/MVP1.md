@@ -88,7 +88,8 @@ GiddyUpRides/
 | Reduce Motion | Honors system reduce-motion setting |
 | Biometric / PIN login | Face ID, Touch ID, or 4-digit PIN — no passwords |
 | Caregiver mode | Family member can book rides on behalf of user |
-| SOS button | Always visible on every screen |
+| SOS button | **Always visible on every screen** — 72pt red circle (`#D62828`), absolutely positioned top-right, decoupled from layout. Tap → confirmation dialog → SOSScreen. Identical on all screens. Implemented via `components/SOSButton.tsx`. Exception: SOSScreen itself. |
+| Mic button | **Always visible on every screen** — 72pt gold circle (`#C8963E`), centered in bottom navigation bar, raised 24pt above bar. Tap → opens VoiceAssistantOverlay. Identical on all screens. Primary voice-input entry point. |
 | Driver card | Large photo, car color + make in plain text, ETA in words |
 | SMS fallback | Ride confirmation + driver info sent via SMS |
 

@@ -37,6 +37,8 @@ import {
 import * as Contacts from 'expo-contacts';
 import { Colors, FontSize, Radius, Spacing, TouchTarget } from '../constants/theme';
 import { useAccessibility, EmergencyContact } from '../context/AccessibilityContext';
+import SOSButton from '../components/SOSButton';
+import MicFab from '../components/MicFab';
 
 const MAX_CONTACTS = 3;
 
@@ -48,9 +50,11 @@ interface Props {
   onDone?: () => void;
   /** If true: shows step indicator + title + "Continue →" / "Skip for now" (onboarding mode) */
   isOnboarding?: boolean;
+  onSOS?: () => void;
+  onVoiceMic?: () => void;
 }
 
-export default function EmergencyContactScreen({ onBack, onDone, isOnboarding = false }: Props) {
+export default function EmergencyContactScreen({ onBack, onDone, isOnboarding = false, onSOS, onVoiceMic }: Props) {
   const { fontScale, prefs, setEmergencyContacts } = useAccessibility();
   const sf = (base: number) => Math.round(base * fontScale);
 
@@ -449,6 +453,11 @@ export default function EmergencyContactScreen({ onBack, onDone, isOnboarding = 
           <View style={{ height: 40 }} />
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* gu-065: SOS always visible, top-right */}
+      <SOSButton onSOS={onSOS} />
+      {/* gu-068: Mic always visible, bottom-right */}
+      <MicFab onPress={onVoiceMic} />
     </SafeAreaView>
   );
 }
@@ -628,12 +637,12 @@ const styles = StyleSheet.create({
   // Add buttons
   addButton: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'center',       // stays centered for single-line; text wraps within flex:1 column
     backgroundColor: Colors.primary,
     borderRadius: Radius.md,
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
-    minHeight: TouchTarget.min,
+    minHeight: TouchTarget.min, // expands naturally if text wraps to 2 lines at XXL
     gap: Spacing.sm,
   },
   addButtonSecondary: {
@@ -645,6 +654,7 @@ const styles = StyleSheet.create({
     fontSize: FontSize.base,
   },
   addButtonText: {
+    flex: 1,               // gu-061: fills remaining row space so text wraps at XXL instead of clipping
     fontSize: FontSize.base,
     fontWeight: '800',
     color: '#000000',      // Black on gold = 8.6:1 ✅
@@ -676,10 +686,9 @@ const styles = StyleSheet.create({
     borderColor: Colors.primary,
     borderRadius: Radius.sm,
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    fontSize: FontSize.base,
+    paddingVertical: Spacing.md, // gu-042: Spacing.sm (8) clipped text at large font sizes → Spacing.md (16) ✅
     color: Colors.textPrimary,
-    minHeight: TouchTarget.min,
+    // fontSize set inline via sf() — not here, to avoid double-apply
   },
   saveBtn: {
     backgroundColor: Colors.primary,

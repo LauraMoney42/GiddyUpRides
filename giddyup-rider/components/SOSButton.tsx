@@ -3,6 +3,9 @@
 // Renders as a fixed floating button — present on every screen.
 // Tapping triggers a confirmation dialog before calling for help
 // (prevents accidental activation per spec requirement).
+//
+// gu-069: Updated to use useSafeAreaInsets for safe top-right positioning.
+//         Added `onPress` prop alias alongside existing `onSOS` for new screens.
 
 import React, { useState } from 'react';
 import {
@@ -11,18 +14,28 @@ import {
   TouchableOpacity,
   Modal,
   StyleSheet,
-  AccessibilityInfo,
   Alert,
   Vibration,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, FontSize, Radius, Spacing, TouchTarget } from '../constants/theme';
+import { useAccessibility } from '../context/AccessibilityContext';
 
 interface SOSButtonProps {
+  /** Called after the user confirms the SOS dialog. New name per gu-069 spec. */
+  onPress?: () => void;
+  /** Legacy alias — kept for backward compat with existing screens that pass onSOS. */
   onSOS?: () => void;
 }
 
-export default function SOSButton({ onSOS }: SOSButtonProps) {
+export default function SOSButton({ onPress, onSOS }: SOSButtonProps) {
   const [confirmVisible, setConfirmVisible] = useState(false);
+  const { fontScale } = useAccessibility();
+  const safeArea = useSafeAreaInsets();
+  const sf = (base: number) => Math.round(base * fontScale);
+
+  // Resolve handler: onPress takes priority, fall back to onSOS for legacy callers
+  const resolvedHandler = onPress ?? onSOS;
 
   const handlePress = () => {
     // Haptic feedback on first tap
@@ -33,9 +46,9 @@ export default function SOSButton({ onSOS }: SOSButtonProps) {
   const handleConfirm = () => {
     setConfirmVisible(false);
     Vibration.vibrate([0, 200, 100, 200]);
-    if (onSOS) {
+    if (resolvedHandler) {
       // gu-014: navigate to full SOSScreen flow (countdown → alerting → alerted)
-      onSOS();
+      resolvedHandler();
     } else {
       // Fallback if no navigator provided (standalone usage)
       Alert.alert(
@@ -52,15 +65,18 @@ export default function SOSButton({ onSOS }: SOSButtonProps) {
 
   return (
     <>
-      {/* Floating SOS button — always visible, bottom-right */}
+      {/* Floating SOS button — top-right, safe area aware */}
       <TouchableOpacity
-        style={styles.sosButton}
+        style={[
+          styles.sosButton,
+          { top: safeArea.top + 4, right: 16 }, // gu-075: tighter to corner — just clears status bar
+        ]}
         onPress={handlePress}
         accessibilityLabel="SOS emergency button"
         accessibilityHint="Double tap to call for emergency help"
         accessibilityRole="button"
       >
-        <Text style={styles.sosText}>SOS</Text>
+        <Text style={[styles.sosText, { fontSize: sf(FontSize.sm) }]}>SOS</Text>
       </TouchableOpacity>
 
       {/* Confirmation dialog — prevents accidental activation */}
@@ -105,25 +121,23 @@ export default function SOSButton({ onSOS }: SOSButtonProps) {
 const styles = StyleSheet.create({
   sosButton: {
     position: 'absolute',
-    bottom: 100,
-    right: Spacing.lg,
+    // top and right are applied inline using safeArea insets
     width: 72,
     height: 72,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.sos,
+    borderRadius: 36,
+    backgroundColor: '#D62828',
     alignItems: 'center',
     justifyContent: 'center',
-    // Shadow for visibility on all backgrounds
-    shadowColor: Colors.sos,
-    shadowOffset: { width: 0, height: 4 },
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.5,
     shadowRadius: 8,
-    elevation: 10,
-    zIndex: 999,
+    elevation: 8,
+    zIndex: 200,
   },
   sosText: {
     color: '#FFFFFF',
-    fontSize: FontSize.sm,
+    fontSize: 14,
     fontWeight: '900',
     letterSpacing: 1,
   },

@@ -53,8 +53,12 @@ export default function TextSizeScreen({ onNext }: Props) {
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.container} bounces={false}>
-        {/* Step indicator */}
-        <Text style={styles.stepLabel}>Step 1 of 2</Text>
+        {/* Progress dots — 7 steps, this is step 0 (Text Size) */}
+        <View style={styles.dotsRow} accessibilityLabel="Step 1 of 7">
+          {[0,1,2,3,4,5,6].map(i => (
+            <View key={i} style={[styles.dot, i === 0 && styles.dotActive]} />
+          ))}
+        </View>
 
         {/* Title */}
         <Text style={[styles.title, { fontSize: sf(26), lineHeight: sf(26) * 1.4 }]} accessibilityRole="header">
@@ -134,11 +138,21 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.xl,
     paddingBottom: Spacing.xxl,
   },
-  stepLabel: {
-    fontSize: FontSize.xs,
-    color: Colors.textSecondary,
-    marginBottom: Spacing.sm,
-    letterSpacing: 0.5,
+  dotsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.xl,
+  },
+  dot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: Colors.border,
+  },
+  dotActive: {
+    backgroundColor: Colors.primary,
+    width: 28,
   },
   title: {
     fontSize: FontSize.xl,

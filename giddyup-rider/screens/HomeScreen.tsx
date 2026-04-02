@@ -15,7 +15,7 @@
 //   - Tap-only gestures (no swipes)
 //   - High-contrast colors, plain language
 
-import React, { useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -28,6 +28,8 @@ import {
 import { Colors, FontSize, Radius, Spacing, TouchTarget } from '../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useAccessibility } from '../context/AccessibilityContext';
+import SOSButton from '../components/SOSButton';
+import { useSafeAreaInsets } from 'react-native-safe-area-context'; // gu-074: inline mic + bottom padding
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -40,11 +42,12 @@ interface RecentRide {
 }
 
 // gu-favorites-label-001: Favorites data — up to 4 shown as pill rows; "See All →" if more.
+// Labels match favoriteAddresses keys in AccessibilityContext: home, grocery, park, doctor
 const FAVORITES = [
-  { emoji: '🏥', label: 'Doctor',   hint: 'Book a ride to a medical appointment' },
-  { emoji: '🛒', label: 'Grocery',  hint: 'Book a ride to the grocery store' },
-  { emoji: '🏠', label: 'Home',     hint: 'Book a ride to go home' },
-  { emoji: '💊', label: 'Pharmacy', hint: 'Book a ride to the pharmacy' },
+  { emoji: '🏥', label: 'Doctor',  hint: 'Book a ride to a medical appointment' },
+  { emoji: '🛒', label: 'Grocery', hint: 'Book a ride to the grocery store' },
+  { emoji: '🏠', label: 'Home',    hint: 'Book a ride to go home' },
+  { emoji: '🌳', label: 'Park',    hint: 'Book a ride to the park' },
 ] as const;
 
 // Mock recent rides — replaced by Firestore query (gu-002) once Firebase is wired
@@ -72,11 +75,24 @@ const MOCK_RECENT_RIDES: RecentRide[] = [
   },
 ];
 
+// gu-067: Western-themed rotating greetings — {name} replaced with userName at runtime
+const WESTERN_GREETINGS = [
+  'Ready to saddle up, {name}?',
+  'Time to ride off into the sunset, {name}!',
+  'Howdy, {name}! Where we headed?',
+  'Yeehaw, {name}! Let\'s hit the trail!',
+  'Well, well, {name} — the trail awaits!',
+  'Giddy up, {name}! Your ride\'s a-waitin\'.',
+  'Tighten your boots, {name} — let\'s ride!',
+  'Good to see ya, {name}! Which way to the horizon?',
+];
+
 // ── HomeScreen ────────────────────────────────────────────────────────────────
 
 interface HomeScreenProps {
   userName?: string;
   onBookRide?: () => void;
+  onBookRideTo?: (destination: string, skipDestinationStep?: boolean) => void; // gu-070: skip step 1 when address is known
   onSettings?: () => void;
   onViewHistory?: () => void;
   onScheduleRide?: () => void;    // gu-018
@@ -88,6 +104,7 @@ interface HomeScreenProps {
 export default function HomeScreen({
   userName = 'there',
   onBookRide,
+  onBookRideTo,
   onSettings,
   onViewHistory,
   onScheduleRide,
@@ -95,9 +112,28 @@ export default function HomeScreen({
   onSOS,
   onVoiceMic,
 }: HomeScreenProps) {
-  const { fontScale } = useAccessibility();
+  const { fontScale, prefs } = useAccessibility();
   const sf = (base: number) => Math.round(base * fontScale);
-  const greeting = getGreeting();
+  const insets = useSafeAreaInsets(); // gu-074: bottom padding for nav bar
+
+  // gu-067: Pick a random western greeting once per mount; embed userName
+  const greeting = useMemo(() => {
+    const template = WESTERN_GREETINGS[Math.floor(Math.random() * WESTERN_GREETINGS.length)];
+    return template.replace('{name}', userName);
+  }, [userName]);
+
+  // gu-fav-prefill-001: Merge saved addresses into favorites list.
+  // Saved address shown as subtitle; tapping calls onBookRideTo(address) to pre-fill BookingScreen.
+  const fav = prefs.favoriteAddresses;
+  const DYNAMIC_FAVORITES = FAVORITES.map(f => ({
+    ...f,
+    savedAddress:
+      f.label === 'Doctor'  ? fav.doctor  :
+      f.label === 'Grocery' ? fav.grocery :
+      f.label === 'Home'    ? fav.home    :
+      f.label === 'Park'    ? fav.park    :
+      '',
+  }));
 
   // gu-044: scroll ref so "Favorites" nav tap scrolls to the section
   const scrollRef = useRef<ScrollView>(null);
@@ -113,25 +149,20 @@ export default function HomeScreen({
       <View style={styles.root}>
 
         {/* ── Header — greeting only; SOS is absolutely positioned below ── */}
-        {/* gu-sos-position-001: paddingRight reserves space so long names never slide behind the SOS button */}
+        {/* gu-sos-position-001: paddingRight reserves space so greeting never slides behind SOS button */}
         <View style={styles.header}>
-          <View>
-            <Text style={[styles.greeting, { fontSize: sf(FontSize.sm) }]}>{greeting},</Text>
-            <Text style={[styles.userName, { fontSize: sf(FontSize.xl) }]} numberOfLines={1} adjustsFontSizeToFit>{userName}</Text>
-          </View>
+          {/* gu-067: full western phrase with name embedded; shrinks to fit at large font scales */}
+          <Text
+            style={[styles.userName, { fontSize: sf(FontSize.lg) }]}
+            numberOfLines={2}
+            adjustsFontSizeToFit
+          >
+            {greeting}
+          </Text>
         </View>
 
-        {/* gu-sos-position-001: SOS absolutely positioned — life-safety button, always visible.
-            Decoupled from header flex so long names / large text CANNOT displace it. */}
-        <TouchableOpacity
-          style={styles.sosFab}
-          onPress={() => { Vibration.vibrate(100); onSOS?.(); }}
-          accessibilityRole="button"
-          accessibilityLabel="SOS emergency button"
-          accessibilityHint="Tap for help — calls 911 or contacts your emergency contacts"
-        >
-          <Text style={styles.sosFabText}>SOS</Text>
-        </TouchableOpacity>
+        {/* gu-069: SOSButton shared component — self-positioning via safe area insets */}
+        <SOSButton onPress={onSOS ?? (() => {})} />
 
         {/* ── Scrollable content ────────────────────────────────────────── */}
         <ScrollView
@@ -157,19 +188,31 @@ export default function HomeScreen({
           </View>
 
           {/* gu-favorites-label-001: Pill list — full-width rows, large icon left + label right.
-               Max 4 shown; "See All →" link appears when there are more. */}
+               gu-fav-prefill-001: Shows saved address subtitle; tapping pre-fills BookingScreen. */}
           <View
             style={styles.favPillList}
             accessibilityRole="list"
             accessibilityLabel="Favorite destinations"
           >
-            {FAVORITES.slice(0, 4).map((fav) => (
+            {DYNAMIC_FAVORITES.slice(0, 4).map((item) => (
               <FavoritePill
-                key={fav.label}
-                emoji={fav.emoji}
-                label={fav.label}
-                hint={fav.hint}
-                onPress={onBookRide}
+                key={item.label}
+                emoji={item.emoji}
+                label={item.label}
+                hint={item.hint}
+                savedAddress={item.savedAddress}
+                onPress={
+                  // gu-070: skip destination step when a real address is saved.
+                  // Saved address → skip step 1, go straight to driver selection.
+                  // No saved address → pre-fill with label but still show step 1
+                  // so the user can confirm/edit the destination.
+                  onBookRideTo
+                    ? () => onBookRideTo(
+                        item.savedAddress || item.label,
+                        !!item.savedAddress,  // true = skip step 1 (address known)
+                      )
+                    : onBookRide
+                }
                 sf={sf}
               />
             ))}
@@ -216,37 +259,12 @@ export default function HomeScreen({
         </ScrollView>
 
         {/* ── Persistent bottom nav bar ─────────────────────────────────── */}
-        {/* gu-044: Favorites | Mic (gold circle) | Settings */}
-        <View style={styles.bottomNav}>
+        {/* gu-074: Settings (left) | Favorites (centre) | Mic inline (right)
+            paddingBottom uses safeAreaInsets.bottom so nav sits flush with
+            the home indicator — no dead space beneath it. */}
+        <View style={[styles.bottomNav, { paddingBottom: insets.bottom + Spacing.xs }]}>
 
-          {/* Left: Favorites */}
-          <TouchableOpacity
-            style={styles.bottomNavItem}
-            onPress={scrollToFavorites}
-            accessibilityRole="button"
-            accessibilityLabel="Favorites"
-            accessibilityHint="Scroll to your favourite destinations"
-          >
-            <Ionicons name="star" size={sf(24)} color={Colors.primary} />
-            <Text
-              style={[styles.bottomNavLabel, { fontSize: sf(FontSize.xs) }]}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-            >Favorites</Text>
-          </TouchableOpacity>
-
-          {/* Center: Voice mic — large gold circle, raised above bar */}
-          <TouchableOpacity
-            style={[styles.bottomNavMic, { width: sf(72), height: sf(72), borderRadius: sf(36) }]}
-            onPress={() => { Vibration.vibrate(60); onVoiceMic?.(); }}
-            accessibilityRole="button"
-            accessibilityLabel="Voice assistant"
-            accessibilityHint="Tap to speak a command — book a ride, check upcoming rides, and more"
-          >
-            <Ionicons name="mic" size={sf(32)} color="#000000" />
-          </TouchableOpacity>
-
-          {/* Right: Settings */}
+          {/* Left: Settings */}
           <TouchableOpacity
             style={styles.bottomNavItem}
             onPress={() => { Vibration.vibrate(50); onSettings?.(); }}
@@ -262,7 +280,35 @@ export default function HomeScreen({
             >Settings</Text>
           </TouchableOpacity>
 
+          {/* Centre: Favorites */}
+          <TouchableOpacity
+            style={styles.bottomNavItem}
+            onPress={scrollToFavorites}
+            accessibilityRole="button"
+            accessibilityLabel="Favorites"
+            accessibilityHint="Scroll to your favourite destinations"
+          >
+            <Ionicons name="star" size={sf(24)} color={Colors.primary} />
+            <Text
+              style={[styles.bottomNavLabel, { fontSize: sf(FontSize.xs) }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            >Favorites</Text>
+          </TouchableOpacity>
+
+          {/* Right: Mic — large gold circle, inline with bar */}
+          <TouchableOpacity
+            style={styles.bottomNavMic}
+            onPress={() => { Vibration.vibrate(40); onVoiceMic?.(); }}
+            accessibilityRole="button"
+            accessibilityLabel="Voice assistant"
+            accessibilityHint="Tap to speak a command — book a ride, check upcoming rides, and more"
+          >
+            <Ionicons name="mic" size={sf(28)} color="#000000" />
+          </TouchableOpacity>
+
         </View>
+
       </View>
     </SafeAreaView>
   );
@@ -287,7 +333,7 @@ function BookRideCard({
 
       {/* Primary: Get a Ride — gu-045: renamed, emoji pinned left, label centered */}
       <TouchableOpacity
-        style={[styles.bookButton, { alignSelf: 'stretch' }]}
+        style={[styles.bookButton, { alignSelf: 'stretch', height: sf(64) }]}
         onPress={() => { Vibration.vibrate(50); onBookRide?.(); }}
         accessibilityLabel="Get a ride now"
         accessibilityHint="Opens the ride booking screen. You will be able to enter your destination."
@@ -295,17 +341,17 @@ function BookRideCard({
       >
         {/* Emoji pinned to left in fixed-width container */}
         <View style={styles.bookButtonIconWrap}>
-          <Text style={[styles.bookButtonIcon, { fontSize: sf(28) }]}>🚗</Text>
+          <Text style={[styles.bookButtonIcon, { fontSize: sf(20) }]}>🚗</Text>
         </View>
         {/* Label fills remaining space and centers itself */}
-        <Text style={[styles.bookButtonText, { fontSize: sf(FontSize.lg) }]}>Get a Ride</Text>
+        <Text style={[styles.bookButtonText, { fontSize: sf(FontSize.base) }]}>Get a Ride</Text>
         {/* Right spacer mirrors the icon width so text is truly centered */}
         <View style={styles.bookButtonIconWrap} />
       </TouchableOpacity>
 
       {/* gu-018: Schedule ahead — gu-045: emoji pinned left, text centered */}
       <TouchableOpacity
-        style={[styles.scheduleButton, { alignSelf: 'stretch' }]}
+        style={[styles.scheduleButton, { alignSelf: 'stretch', height: sf(64) }]}
         onPress={() => { Vibration.vibrate(40); onScheduleRide?.(); }}
         accessibilityLabel="Schedule a ride in advance"
         accessibilityHint="Book a ride for a future date and time, like a doctor appointment"
@@ -341,25 +387,39 @@ function FavoritePill({
   emoji,
   label,
   hint,
+  savedAddress,
   onPress,
   sf,
 }: {
   emoji: string;
   label: string;
   hint: string;
+  savedAddress?: string;
   onPress?: () => void;
   sf: (n: number) => number;
 }) {
+  const hasSaved = savedAddress && savedAddress.trim().length > 0;
   return (
     <TouchableOpacity
-      style={[styles.favPill, { minHeight: sf(TouchTarget.min) }]}
+      style={[styles.favPill, { minHeight: sf(TouchTarget.min) }, hasSaved && styles.favPillSaved]}
       onPress={() => { Vibration.vibrate(50); onPress?.(); }}
       accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityHint={hint}
+      accessibilityLabel={hasSaved ? `${label}: ${savedAddress}` : label}
+      accessibilityHint={hasSaved ? `Books a ride to your saved ${label.toLowerCase()} address` : hint}
     >
       <Text style={{ fontSize: sf(28) }}>{emoji}</Text>
-      <Text style={[styles.favPillLabel, { fontSize: sf(FontSize.base) }]}>{label}</Text>
+      <View style={styles.favPillTextCol}>
+        <Text style={[styles.favPillLabel, { fontSize: sf(FontSize.base) }]}>{label}</Text>
+        {hasSaved && (
+          <Text
+            style={[styles.favPillAddress, { fontSize: sf(FontSize.xs) }]}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {savedAddress}
+          </Text>
+        )}
+      </View>
     </TouchableOpacity>
   );
 }
@@ -409,13 +469,6 @@ function RecentRideCard({
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function getGreeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'Good morning';
-  if (hour < 17) return 'Good afternoon';
-  return 'Good evening';
-}
-
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
@@ -448,32 +501,6 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     fontWeight: '800',
   },
-  // gu-sos-position-001: absolutely positioned FAB — completely decoupled from layout.
-  // zIndex 200 keeps it above all content including modals/overlays rendered in root.
-  sosFab: {
-    position: 'absolute',
-    top: Spacing.md,
-    right: Spacing.lg,
-    zIndex: 200,
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: '#D62828',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#D62828',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.5,
-    shadowRadius: 8,
-    elevation: 10,
-  },
-  sosFabText: {
-    color: '#FFFFFF',
-    fontSize: FontSize.sm,
-    fontWeight: '900',
-    letterSpacing: 1,
-  },
-
   // ── Scroll ─────────────────────────────────────────────────────────────────
   scroll: {
     flex: 1,
@@ -496,21 +523,14 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
   },
   bookButton: {
-    // gu-045: row layout — emoji left, label centered, mirror spacer right
-    // gu-home-layout-001: minHeight reduced from TouchTarget.large (72) → min (60)
+    // gu-058: fixed height (applied inline via sf(64)) so both primary buttons are always identical
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: Colors.primary,
     borderRadius: Radius.full,
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.xs,
-    minHeight: TouchTarget.min,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 6,
+    overflow: 'hidden',
   },
   // Fixed-width container for emoji — keeps label truly centered
   bookButtonIconWrap: {
@@ -519,7 +539,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   bookButtonIcon: {
-    // fontSize set inline via sf(28) so it scales with text-size preference
+    // fontSize set inline via sf(20) — matches scheduleButton emoji size
   },
   bookButtonText: {
     flex: 1,
@@ -529,18 +549,17 @@ const styles = StyleSheet.create({
   },
   scheduleButton: {
     // gu-045: row layout — emoji left, label centered, mirror spacer right
-    // gu-home-layout-001: minHeight reduced from TouchTarget.large (72) → min (60)
+    // gu-058: fixed height (applied inline via sf(64)) — must match bookButton exactly
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: 'rgba(200,150,62,0.12)',
     borderRadius: Radius.full,
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.xs,
     marginTop: Spacing.md,
-    minHeight: TouchTarget.min,
     borderWidth: 1.5,
     borderColor: Colors.primary,
+    overflow: 'hidden',
   },
   scheduleButtonIconWrap: {
     width: 44,
@@ -605,10 +624,23 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     gap: Spacing.md,
   },
+  // gu-fav-prefill-001: gold border when a saved address is set
+  favPillSaved: {
+    borderColor: Colors.primary,
+    borderWidth: 1.5,
+  },
+  // Column wrapper when address subtitle is present
+  favPillTextCol: {
+    flex: 1,
+    gap: 2,
+  },
   favPillLabel: {
     color: Colors.textPrimary,
     fontWeight: '700',
-    flex: 1,             // takes all remaining space — label never wraps or truncates
+  },
+  favPillAddress: {
+    color: Colors.textSecondary,
+    fontWeight: '500',
   },
   favSeeAll: {
     alignItems: 'flex-end',
@@ -685,7 +717,8 @@ const styles = StyleSheet.create({
   },
 
   // ── Bottom nav bar ──────────────────────────────────────────────────────────
-  // gu-044: persistent 3-item bar — Favorites | Mic (gold circle) | Settings
+  // gu-074: Settings (left) | Favorites (centre) | Mic inline (right)
+  // paddingBottom applied inline via insets.bottom so it never overlaps home indicator
   bottomNav: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -693,8 +726,8 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: Colors.border,
     paddingTop: Spacing.sm,
-    paddingBottom: Spacing.lg,  // extra breathing room above iPhone home indicator
     paddingHorizontal: Spacing.lg,
+    // paddingBottom set inline: insets.bottom + Spacing.xs
   },
   bottomNavItem: {
     flex: 1,
@@ -708,17 +741,19 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     fontWeight: '600',
   },
-  // Center mic button — raised gold circle (the primary action)
+  // gu-074: Inline gold mic circle — sits in the nav row, not floating above it
   bottomNavMic: {
-    backgroundColor: Colors.primary,  // Warm gold — black icon = 8.6:1 ✅
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: Spacing.lg,
-    marginTop: -24,  // lift above the nav bar to make it the visual hero
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.45,
-    shadowRadius: 12,
-    elevation: 10,
+    marginVertical: Spacing.xs,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 4,
   },
 });

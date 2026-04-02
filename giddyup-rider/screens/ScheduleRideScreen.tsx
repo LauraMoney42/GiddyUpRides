@@ -13,7 +13,7 @@
  * Accessibility: 60pt+ touch targets, fontScale via sf(), VoiceOver labels.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -25,10 +25,25 @@ import {
   Vibration,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { Colors, FontSize, Radius, Spacing, TouchTarget } from '../constants/theme';
 import SOSButton from '../components/SOSButton';
+import MicFab from '../components/MicFab';
 import { useAccessibility } from '../context/AccessibilityContext';
+
+// ── Google Places autocomplete ────────────────────────────────────────────────
+// gu-057: Same API key + fetch pattern as BookingScreen.
+const PLACES_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ?? '';
+
+interface PlaceSuggestion {
+  place_id: string;
+  description: string;
+  structured_formatting: {
+    main_text: string;
+    secondary_text?: string;
+  };
+}
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -97,12 +112,13 @@ interface Props {
   onBack: () => void;
   onConfirm: (ride: ScheduledRide) => void;
   onSOS?: () => void;
+  onVoiceMic?: () => void;
 }
 
 // ── Main screen ───────────────────────────────────────────────────────────────
 
-export default function ScheduleRideScreen({ onBack, onConfirm, onSOS }: Props) {
-  const { fontScale } = useAccessibility();
+export default function ScheduleRideScreen({ onBack, onConfirm, onSOS, onVoiceMic }: Props) {
+  const { fontScale, prefs } = useAccessibility();
   const sf = (base: number) => Math.round(base * fontScale);
 
   const [step, setStep]              = useState<Step>('destination');
@@ -110,6 +126,12 @@ export default function ScheduleRideScreen({ onBack, onConfirm, onSOS }: Props) 
   const [customInput, setCustomInput] = useState('');
   const [selectedDate, setSelectedDate] = useState<typeof DATES[0] | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+
+  // gu-057: autocomplete state for the custom address input
+  const [suggestions,       setSuggestions]       = useState<PlaceSuggestion[]>([]);
+  const [showDropdown,      setShowDropdown]       = useState(false);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const stepIndex: Record<Step, number> = { destination: 1, date: 2, time: 3, confirm: 4 };
 
@@ -122,6 +144,56 @@ export default function ScheduleRideScreen({ onBack, onConfirm, onSOS }: Props) 
     if (!customInput.trim()) return;
     Vibration.vibrate(40);
     setDestination(customInput.trim());
+    setSuggestions([]);
+    setShowDropdown(false);
+  };
+
+  // gu-057: fetch Google Places suggestions for the typed address
+  const fetchSuggestions = async (query: string) => {
+    if (!PLACES_KEY || query.trim().length < 3) {
+      setSuggestions([]);
+      setShowDropdown(false);
+      return;
+    }
+    setLoadingSuggestions(true);
+    try {
+      const url =
+        `https://maps.googleapis.com/maps/api/place/autocomplete/json` +
+        `?input=${encodeURIComponent(query)}&key=${PLACES_KEY}&language=en`;
+      const res  = await fetch(url);
+      const data: { predictions?: PlaceSuggestion[] } = await res.json();
+      if (data.predictions?.length) {
+        setSuggestions(data.predictions.slice(0, 5));
+        setShowDropdown(true);
+      } else {
+        setSuggestions([]);
+        setShowDropdown(false);
+      }
+    } catch {
+      setSuggestions([]);
+      setShowDropdown(false);
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  };
+
+  const handleAddressChange = (text: string) => {
+    setCustomInput(text);
+    if (!text.trim()) {
+      setSuggestions([]);
+      setShowDropdown(false);
+      return;
+    }
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => fetchSuggestions(text), 400);
+  };
+
+  const handleSuggestionSelect = (pred: PlaceSuggestion) => {
+    Vibration.vibrate(30);
+    setCustomInput(pred.description);
+    setDestination(pred.description);
+    setSuggestions([]);
+    setShowDropdown(false);
   };
 
   const goNext = (nextStep: Step) => {
@@ -206,6 +278,48 @@ export default function ScheduleRideScreen({ onBack, onConfirm, onSOS }: Props) 
           {/* ── Step 1: Destination ──────────────────────────────────────── */}
           {step === 'destination' && (
             <View>
+              {/* gu-onboarding-favorites-001: Saved favorites — show first if any are set */}
+              {(() => {
+                const fav = prefs.favoriteAddresses;
+                const saved = [
+                  { emoji: '🏠', label: 'Home',    address: fav.home    },
+                  { emoji: '🛒', label: 'Grocery', address: fav.grocery },
+                  { emoji: '🌳', label: 'Park',    address: fav.park    },
+                  { emoji: '🏥', label: 'Doctor',  address: fav.doctor  },
+                ].filter(f => f.address.trim().length > 0);
+
+                if (saved.length === 0) return null;
+                return (
+                  <>
+                    <Text style={[styles.sectionLabel, { fontSize: sf(FontSize.xs) }]}>
+                      My saved places
+                    </Text>
+                    <View style={styles.presetGrid}>
+                      {saved.map(f => {
+                        const isSelected = destination === f.address;
+                        return (
+                          <TouchableOpacity
+                            key={f.label}
+                            style={[styles.presetTile, styles.savedFavTile, isSelected && styles.presetTileSelected]}
+                            onPress={() => { Vibration.vibrate(30); setDestination(f.address); setCustomInput(''); }}
+                            accessibilityRole="button"
+                            accessibilityState={{ selected: isSelected }}
+                            accessibilityLabel={`${f.label}: ${f.address}`}
+                            accessibilityHint={`Schedule a ride to your saved ${f.label.toLowerCase()} address`}
+                            activeOpacity={0.75}
+                          >
+                            <Text style={styles.presetEmoji}>{f.emoji}</Text>
+                            <Text style={[styles.presetLabel, { fontSize: sf(14) }, isSelected && styles.presetLabelSelected]}>
+                              {f.label}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </>
+                );
+              })()}
+
               {/* Preset tiles */}
               <Text style={[styles.sectionLabel, { fontSize: sf(FontSize.xs) }]}>
                 Common destinations
@@ -240,12 +354,21 @@ export default function ScheduleRideScreen({ onBack, onConfirm, onSOS }: Props) 
                 <TextInput
                   style={[styles.textInput, { fontSize: sf(FontSize.sm) }]}
                   value={customInput}
-                  onChangeText={setCustomInput}
+                  onChangeText={handleAddressChange}
                   placeholder="e.g. 123 Main Street"
                   placeholderTextColor={Colors.disabled}
                   returnKeyType="done"
+                  autoCorrect={false}
+                  onFocus={() => {
+                    if (customInput.trim().length >= 3) fetchSuggestions(customInput);
+                  }}
+                  onBlur={() => {
+                    // Delay so tapping a suggestion registers before dropdown hides
+                    setTimeout(() => setShowDropdown(false), 250);
+                  }}
                   onSubmitEditing={handleCustomSubmit}
                   accessibilityLabel="Type a destination address"
+                  accessibilityHint="Suggestions will appear as you type"
                 />
                 {customInput.trim().length > 0 && (
                   <TouchableOpacity
@@ -259,6 +382,49 @@ export default function ScheduleRideScreen({ onBack, onConfirm, onSOS }: Props) 
                   </TouchableOpacity>
                 )}
               </View>
+
+              {/* gu-057: Autocomplete dropdown */}
+              {showDropdown && suggestions.length > 0 && (
+                <View style={styles.dropdownCard}>
+                  {suggestions.map((pred, idx) => (
+                    <TouchableOpacity
+                      key={pred.place_id}
+                      style={[
+                        styles.suggestionRow,
+                        idx === suggestions.length - 1 && styles.suggestionRowLast,
+                      ]}
+                      onPress={() => handleSuggestionSelect(pred)}
+                      accessibilityRole="button"
+                      accessibilityLabel={pred.description}
+                      activeOpacity={0.7}
+                    >
+                      <Text
+                        style={[styles.suggestionMain, { fontSize: sf(FontSize.sm) }]}
+                        numberOfLines={1}
+                      >
+                        {pred.structured_formatting.main_text}
+                      </Text>
+                      {!!pred.structured_formatting.secondary_text && (
+                        <Text
+                          style={[styles.suggestionSub, { fontSize: sf(14) }]}
+                          numberOfLines={1}
+                        >
+                          {pred.structured_formatting.secondary_text}
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+
+              {/* Subtle loading indicator while fetching */}
+              {loadingSuggestions && !showDropdown && (
+                <ActivityIndicator
+                  color={Colors.primary}
+                  size="small"
+                  style={{ marginTop: Spacing.xs, alignSelf: 'flex-start' }}
+                />
+              )}
 
               {destination.trim().length > 0 && (
                 <View style={styles.selectedBadge}>
@@ -400,6 +566,15 @@ export default function ScheduleRideScreen({ onBack, onConfirm, onSOS }: Props) 
                 </Text>
               </View>
 
+              {/* gu-029: Accessibility notice — only shown if rider has mobility needs */}
+              {(prefs.mobilityNeeds.length > 0 || prefs.mobilityNotes.trim().length > 0) && (
+                <View style={styles.accessibilityNote}>
+                  <Text style={[styles.accessibilityNoteText, { fontSize: sf(FontSize.xs) }]}>
+                    ♿  Your driver will be notified of your accessibility needs before pickup.
+                  </Text>
+                </View>
+              )}
+
               {/* Schedule CTA */}
               <TouchableOpacity
                 style={styles.scheduleBtn}
@@ -431,6 +606,7 @@ export default function ScheduleRideScreen({ onBack, onConfirm, onSOS }: Props) 
         </ScrollView>
 
         <SOSButton onSOS={onSOS} />
+        <MicFab onPress={onVoiceMic} />
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -506,6 +682,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: Spacing.xs,
   },
+  // gu-onboarding-favorites-001: gold accent border distinguishes saved places from generic presets
+  savedFavTile: {
+    borderColor: Colors.primary,
+    borderWidth: 1.5,
+  },
   presetTileSelected: {
     borderColor: Colors.primary,
     backgroundColor: Colors.primary,  // Gold bg — black text = 8.6:1 ✅
@@ -540,6 +721,35 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   inputConfirmText: { color: '#000000', fontWeight: '700', fontSize: FontSize.xs }, // Black on gold ✅
+
+  // gu-057: autocomplete dropdown
+  dropdownCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.md,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    marginTop: Spacing.xs,
+    overflow: 'hidden',
+  },
+  suggestionRow: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    minHeight: TouchTarget.min,
+    justifyContent: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  suggestionRowLast: {
+    borderBottomWidth: 0,
+  },
+  suggestionMain: {
+    color: Colors.textPrimary,
+    fontWeight: '600',
+  },
+  suggestionSub: {
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
 
   selectedBadge: {
     backgroundColor: Colors.surface,  // Navy surface + gold border ✅
@@ -660,6 +870,17 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginTop: Spacing.xs,
   },
+
+  // gu-029: Accessibility notice banner (matches BookingScreen pattern)
+  accessibilityNote: {
+    backgroundColor: 'rgba(200,150,62,0.15)',
+    borderRadius: Radius.md,
+    borderLeftWidth: 3,
+    borderLeftColor: Colors.primary,
+    padding: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  accessibilityNoteText: { color: Colors.textPrimary, lineHeight: 20 },
 
   // Schedule / edit buttons
   scheduleBtn: {

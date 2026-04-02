@@ -33,6 +33,8 @@ import {
 } from 'react-native';
 import { Colors, FontSize, Radius, Spacing, TouchTarget } from '../../constants/theme';
 import { useAccessibility, MobilityNeed } from '../../context/AccessibilityContext';
+import SOSButton from '../../components/SOSButton';
+import MicFab from '../../components/MicFab';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -43,6 +45,8 @@ interface MobilitySetupScreenProps {
   onBack?: () => void;
   /** If true: shows step indicator + "Skip for now" link (onboarding mode) */
   isOnboarding?: boolean;
+  onSOS?: () => void;
+  onVoiceMic?: () => void;
 }
 
 // ── Need option definitions ───────────────────────────────────────────────────
@@ -95,6 +99,8 @@ export default function MobilitySetupScreen({
   onDone,
   onBack,
   isOnboarding = false,
+  onSOS,
+  onVoiceMic,
 }: MobilitySetupScreenProps) {
   const { prefs, setMobilityProfile, fontScale } = useAccessibility();
   const sf = (base: number) => Math.round(base * fontScale);
@@ -297,6 +303,9 @@ export default function MobilitySetupScreen({
 
         </ScrollView>
       </KeyboardAvoidingView>
+      {/* gu-069: SOS + mic always visible */}
+      <SOSButton onPress={onSOS ?? (() => {})} />
+      <MicFab onPress={onVoiceMic} />
     </SafeAreaView>
   );
 }
