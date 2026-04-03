@@ -405,7 +405,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   optionLabelSelected: {
-    color: '#FFFFFF', // Black on gold = 8.6:1 ✅
+    color: '#000000', // Black on gold = 8.6:1 ✅
   },
   checkbox: {
     width: 28,
@@ -422,7 +422,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.primary,
   },
   checkmark: {
-    color: '#FFFFFF',  // Black on gold checkbox = 8.6:1 ✅
+    color: '#000000',  // Black on gold checkbox = 8.6:1 ✅
     // fontSize set inline via sf(FontSize.xs)
     fontWeight: '800',
   },
@@ -486,7 +486,7 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   saveBtnText: {
-    color: '#FFFFFF',  // Black on gold = 8.6:1 ✅
+    color: '#000000',  // Black on gold = 8.6:1 ✅
     fontWeight: '800',
     letterSpacing: 0.3,
   },

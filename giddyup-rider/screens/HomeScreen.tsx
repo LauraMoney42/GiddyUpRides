@@ -543,7 +543,7 @@ const styles = StyleSheet.create({
   },
   bookButtonText: {
     flex: 1,
-    color: '#FFFFFF',
+    color: '#000000', // Black on electric blue — 16.6:1 ✅ WCAG AAA (gu-078)
     fontWeight: '900',
     textAlign: 'center',
   },
@@ -687,7 +687,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   rebookText: {
-    color: '#FFFFFF',
+    color: '#000000', // Black on electric blue — 16.6:1 ✅ (gu-078)
     fontWeight: '700',
   },
 

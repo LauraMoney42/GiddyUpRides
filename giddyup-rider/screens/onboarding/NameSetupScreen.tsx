@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
   doneButtonText: {
-    color: '#FFFFFF', // Black on gold — WCAG AAA contrast
+    color: '#000000', // Black on gold — WCAG AAA contrast
     fontWeight: '800',
     letterSpacing: 0.2,
     textAlign: 'center',

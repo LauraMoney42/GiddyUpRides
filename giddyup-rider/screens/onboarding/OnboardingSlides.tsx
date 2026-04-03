@@ -146,7 +146,7 @@ export default function OnboardingSlides({ onDone, onBack }: Props) {
           {slide.showMicHero ? (
             // gu-040: Voice Assistant slide
             <View style={styles.micHeroCircle} accessibilityElementsHidden>
-              <Ionicons name="mic" size={sf(52)} color="#FFFFFF" />
+              <Ionicons name="mic" size={sf(52)} color="#000000" />{/* Black on electric blue — 16.6:1 ✅ AAA (gu-078) */}
             </View>
           ) : (
             !!slide.emoji && <Text style={[styles.slideEmoji, { fontSize: sf(FontSize.hero) }]}>{slide.emoji}</Text>
@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   nextButtonText: {
-    color: '#FFFFFF', // Black on gold — WCAG AAA contrast
+    color: '#000000', // Black on gold — WCAG AAA contrast
     fontWeight: '800',
     letterSpacing: 0.3,
   },

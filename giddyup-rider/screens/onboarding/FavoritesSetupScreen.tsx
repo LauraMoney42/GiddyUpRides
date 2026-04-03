@@ -688,7 +688,7 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   saveBtnText: {
-    color: '#FFFFFF',  // Black on gold = 8.6:1 ✅
+    color: '#000000',  // Black on gold = 8.6:1 ✅
     fontWeight: '800',
     letterSpacing: 0.3,
   },

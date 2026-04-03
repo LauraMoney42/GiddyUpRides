@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   enableBtnText: {
-    color: '#FFFFFF',  // Black on gold — WCAG AAA contrast ✅
+    color: '#000000',  // Black on gold — WCAG AAA contrast ✅
     fontWeight: '800',
     letterSpacing: 0.3,
     textAlign: 'center',

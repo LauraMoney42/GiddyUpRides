@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',              // black background
     borderRadius: Radius.md,
     borderWidth: 2,
-    borderColor: Colors.primary,             // gold border
+    borderColor: Colors.primary,             // electric blue border (gu-078)
     padding: Spacing.lg,
     marginBottom: Spacing.xl,
     gap: Spacing.md,
@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
 
   emergencyText: {
     flex: 1,
-    color: '#FFFFFF',                        // white on navy — high contrast
+    color: '#FFFFFF',                        // white on black (#000000) — 21:1 ✅ AAA (gu-078)
     fontWeight: '600',
   },
 
@@ -353,7 +353,7 @@ const styles = StyleSheet.create({
   },
 
   acceptButtonText: {
-    color: '#FFFFFF',                        // black on gold — max contrast
+    color: '#000000',                        // black on gold — max contrast
     fontWeight: '800',
     letterSpacing: 0.3,
     textAlign: 'center',

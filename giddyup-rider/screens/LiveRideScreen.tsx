@@ -253,13 +253,13 @@ export default function LiveRideScreen({
         <View style={[styles.statusBanner, { backgroundColor: statusConfig.bannerColor }]}>
           <Text style={[styles.statusEmoji, { fontSize: sf(FontSize.hero) }]}>{statusConfig.emoji}</Text>
           <Text
-            style={[styles.statusTitle, { fontSize: sf(FontSize.xl) }]}
+            style={[styles.statusTitle, { fontSize: sf(FontSize.xl), color: statusConfig.textColor }]}
             accessibilityRole="header"
             accessibilityLabel={statusConfig.title}
           >
             {statusConfig.title}
           </Text>
-          <Text style={[styles.statusSub, { fontSize: sf(FontSize.sm), lineHeight: sf(FontSize.sm) * 1.5 }]}>{statusConfig.subtitle}</Text>
+          <Text style={[styles.statusSub, { fontSize: sf(FontSize.sm), lineHeight: sf(FontSize.sm) * 1.5, color: statusConfig.textColorSub }]}>{statusConfig.subtitle}</Text>
         </View>
 
         {/* ETA pill — only shown while driver is coming */}
@@ -392,7 +392,7 @@ function getStatusConfig(
   driverName: string,
   destination: string,
   etaStr: string
-): { title: string; subtitle: string; emoji: string; bannerColor: string } {
+): { title: string; subtitle: string; emoji: string; bannerColor: string; textColor: string; textColorSub: string } {
   switch (phase) {
     case 'driver_coming':
       return {
@@ -400,34 +400,44 @@ function getStatusConfig(
         title: 'Driver on the way',
         subtitle: `${driverName} is heading to your pickup — ${etaStr}`,
         bannerColor: Colors.primaryDark, // gu-020: was hardcoded green
+        textColor: '#000000',            // Black on deep electric blue (#00C4CC) — ✅ AAA (gu-085)
+        textColorSub: 'rgba(0,0,0,0.72)',// 72% black — readable sub-text (gu-085)
       };
     case 'driver_arrived':
       return {
         emoji: '🙋',
         title: 'Your driver is here!',
         subtitle: `Look for ${driverName} outside. They're waiting for you.`,
-        bannerColor: Colors.primaryDark, // gu-020: was hardcoded green
+        bannerColor: Colors.primaryDark,
+        textColor: '#000000',
+        textColorSub: 'rgba(0,0,0,0.72)',
       };
     case 'in_progress':
       return {
         emoji: '🛣️',
         title: 'Ride in progress',
         subtitle: `On the way to ${destination}.`,
-        bannerColor: Colors.primaryDark, // gu-020: was hardcoded green
+        bannerColor: Colors.primaryDark,
+        textColor: '#000000',
+        textColorSub: 'rgba(0,0,0,0.72)',
       };
     case 'almost_there':
       return {
         emoji: '🏁',
         title: 'Almost there!',
         subtitle: `Just a couple of minutes to ${destination}.`,
-        bannerColor: Colors.primary,
+        bannerColor: Colors.primary,     // Electric blue (#00F0FF)
+        textColor: '#000000',            // Black on electric blue — 16.6:1 ✅ AAA (gu-085)
+        textColorSub: 'rgba(0,0,0,0.72)',
       };
     case 'completed':
       return {
         emoji: '✅',
         title: `You've arrived!`,
         subtitle: `Welcome to ${destination}. Hope the ride was great!`,
-        bannerColor: Colors.surface,  // Navy — white text high contrast ✅
+        bannerColor: Colors.surface,     // Dark surface (#1A1A1A)
+        textColor: Colors.textPrimary,   // White on dark surface — 21:1 ✅ AAA (gu-085)
+        textColorSub: 'rgba(255,255,255,0.82)',
       };
   }
 }
@@ -459,15 +469,13 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   statusTitle: {
-    // fontSize set inline via sf() — gu-text-scale
+    // fontSize + color set inline via sf() / statusConfig.textColor — gu-text-scale, gu-085
     fontWeight: '800',
-    color: '#FFFFFF',
     textAlign: 'center',
     marginBottom: 8,
   },
   statusSub: {
-    // fontSize set inline via sf() — gu-text-scale
-    color: 'rgba(255,255,255,0.82)',
+    // fontSize + color set inline via sf() / statusConfig.textColorSub — gu-text-scale, gu-085
     textAlign: 'center',
     lineHeight: 26,
   },
@@ -540,7 +548,7 @@ const styles = StyleSheet.create({
   avatarInitial: {
     // fontSize set inline via sf(28) — gu-text-scale
     fontWeight: '800',
-    color: '#FFFFFF', // Black on gold avatar — WCAG AAA
+    color: '#000000', // Black on gold avatar — WCAG AAA
   },
   driverInfo: {
     flex: 1,
@@ -661,7 +669,7 @@ const styles = StyleSheet.create({
   primaryBtnText: {
     // fontSize set inline via sf() — gu-text-scale
     fontWeight: '800',
-    color: '#FFFFFF',  // Black on gold = 8.6:1 ✅
+    color: '#000000',  // Black on gold = 8.6:1 ✅
   },
   cancelBtn: {
     borderWidth: 1.5,

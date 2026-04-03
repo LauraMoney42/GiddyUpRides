@@ -575,7 +575,7 @@ const styles = StyleSheet.create({
   contactInitial: {
     // fontSize set inline via sf(FontSize.base)
     fontWeight: '800',
-    color: '#FFFFFF', // Black on gold avatar — WCAG AAA
+    color: '#000000', // Black on gold avatar — WCAG AAA
   },
   contactInfo: {
     flex: 1,
@@ -657,7 +657,7 @@ const styles = StyleSheet.create({
     flex: 1,               // gu-061: fills remaining row space so text wraps at XXL instead of clipping
     // fontSize set inline via sf(FontSize.base)
     fontWeight: '800',
-    color: '#FFFFFF',      // Black on gold = 8.6:1 ✅
+    color: '#000000',      // Black on gold = 8.6:1 ✅
   },
   addButtonTextSecondary: {
     color: Colors.primary, // secondary button — primary color text
@@ -701,7 +701,7 @@ const styles = StyleSheet.create({
   saveBtnText: {
     // fontSize set inline via sf(FontSize.base)
     fontWeight: '800',
-    color: '#FFFFFF', // Black on gold — WCAG AAA
+    color: '#000000', // Black on gold — WCAG AAA
   },
 
   // Onboarding-mode content padding
@@ -754,7 +754,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
   },
   continueBtnText: {
-    color: '#FFFFFF', // Black on gold — WCAG AAA
+    color: '#000000', // Black on gold — WCAG AAA
     fontWeight: '800',
     letterSpacing: 0.3,
   },

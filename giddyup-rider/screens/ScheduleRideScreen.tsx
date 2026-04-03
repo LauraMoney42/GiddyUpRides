@@ -693,7 +693,7 @@ const styles = StyleSheet.create({
   },
   presetEmoji: { /* fontSize set inline via sf(FontSize.lg) */ },
   presetLabel: { fontWeight: '600', color: Colors.textPrimary, textAlign: 'center' },
-  presetLabelSelected: { color: '#FFFFFF' }, // Black on gold = 8.6:1 ✅
+  presetLabelSelected: { color: '#000000' }, // Black on gold = 8.6:1 ✅
 
   // Custom input
   inputRow: {
@@ -720,7 +720,7 @@ const styles = StyleSheet.create({
     minHeight: TouchTarget.min,
     justifyContent: 'center',
   },
-  inputConfirmText: { color: '#FFFFFF', fontWeight: '700' /* fontSize set inline via sf(FontSize.xs) */ }, // Black on gold ✅
+  inputConfirmText: { color: '#000000', fontWeight: '700' /* fontSize set inline via sf(FontSize.xs) */ }, // Black on gold ✅
 
   // gu-057: autocomplete dropdown
   dropdownCard: {
@@ -790,7 +790,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 18,
   },
-  dayTileTextSelected: { color: '#FFFFFF' }, // Black on gold = 8.6:1 ✅
+  dayTileTextSelected: { color: '#000000' }, // Black on gold = 8.6:1 ✅
 
   // Time picker grid
   timeGrid: {
@@ -818,7 +818,7 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     fontWeight: '600',
   },
-  timeTileTextSelected: { color: '#FFFFFF' }, // Black on gold = 8.6:1 ✅
+  timeTileTextSelected: { color: '#000000' }, // Black on gold = 8.6:1 ✅
 
   // Next button
   nextBtn: {
@@ -839,7 +839,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0,
     elevation: 0,
   },
-  nextBtnText: { color: '#FFFFFF', fontWeight: '800' }, // Black on gold = 8.6:1 ✅
+  nextBtnText: { color: '#000000', fontWeight: '800' }, // Black on gold = 8.6:1 ✅
 
   // Confirm summary card
   summaryCard: {
@@ -896,7 +896,7 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 6,
   },
-  scheduleBtnText: { color: '#FFFFFF', fontWeight: '900' }, // Black on gold — WCAG AAA
+  scheduleBtnText: { color: '#000000', fontWeight: '900' }, // Black on gold — WCAG AAA
   editBtn: {
     alignItems: 'center',
     justifyContent: 'center',

@@ -1092,7 +1092,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   stepNumberActive: {
-    color: '#FFFFFF',  // Black on gold step dot = 8.6:1 ✅
+    color: '#000000',  // Black on gold step dot = 8.6:1 ✅
   },
   stepLabel: {
     // fontSize set inline via sf() — gu-text-scale
@@ -1324,7 +1324,7 @@ const styles = StyleSheet.create({
   },
   primaryButtonText: {
     // fontSize set inline via sf() — gu-text-scale
-    color: '#FFFFFF',  // Black on gold = 8.6:1 ✅
+    color: '#000000',  // Black on gold = 8.6:1 ✅
     fontWeight: '900',
   },
   searchingRow: {
@@ -1416,7 +1416,7 @@ const styles = StyleSheet.create({
   },
   selectButtonText: {
     // fontSize set inline via sf() — gu-text-scale
-    color: '#FFFFFF',  // Black on gold = 8.6:1 ✅
+    color: '#000000',  // Black on gold = 8.6:1 ✅
     fontWeight: '800',
   },
 
@@ -1510,7 +1510,7 @@ const styles = StyleSheet.create({
   },
   confirmButtonText: {
     // fontSize set inline via sf() — gu-text-scale
-    color: '#FFFFFF',  // Black on gold = 8.6:1 ✅
+    color: '#000000',  // Black on gold = 8.6:1 ✅
     fontWeight: '900',
   },
   changeDriverButton: {
@@ -1578,7 +1578,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   modalButtonText: {
-    color: '#FFFFFF', // Black on gold — WCAG AAA contrast
+    color: '#000000', // Black on gold — WCAG AAA contrast
     fontWeight: '900',
   },
 });

@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   getStartedText: {
-    color: '#FFFFFF', // solid black for maximum readability on gold button
+    color: '#000000', // solid black for maximum readability on gold button
     fontWeight: '900',
     letterSpacing: 0.5,
   },

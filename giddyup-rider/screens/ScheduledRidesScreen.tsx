@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
     marginTop: Spacing.sm,
   },
-  scheduleNewBtnText: { color: '#FFFFFF', fontWeight: '800' }, // Black on gold — WCAG AAA
+  scheduleNewBtnText: { color: '#000000', fontWeight: '800' }, // Black on gold — WCAG AAA
 
   // "Schedule Another Ride" — filled gold, matches all other primary CTAs in the app
   addMoreBtn: {
@@ -319,5 +319,5 @@ const styles = StyleSheet.create({
     minHeight: TouchTarget.min,
     marginTop: Spacing.md,
   },
-  addMoreBtnText: { color: '#FFFFFF', fontWeight: '800' },
+  addMoreBtnText: { color: '#000000', fontWeight: '800' }, // Black on electric blue — 16.6:1 ✅ AAA (gu-078)
 });

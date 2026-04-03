@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   optionLabelSelected: {
-    color: '#FFFFFF',  // Black on gold = 8.6:1 ✅
+    color: '#000000',  // Black on gold = 8.6:1 ✅
   },
   radio: {
     width: 26,
@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
     elevation: 0,
   },
   doneButtonText: {
-    color: '#FFFFFF',  // Black on gold = 8.6:1 ✅
+    color: '#000000',  // Black on gold = 8.6:1 ✅
     fontWeight: '800',
     letterSpacing: 0.3,
   },
