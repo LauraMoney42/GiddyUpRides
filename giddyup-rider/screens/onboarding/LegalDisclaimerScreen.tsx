@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
   },
 
-  // Section card — navy surface, gold title, white body text
+  // Section card — dark surface, electric blue title, white body text (gu-078)
   card: {
     borderRadius: Radius.md,
     borderWidth: 1.5,
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontWeight: '800',
     flex: 1,
-    color: Colors.primary,                   // gold title — high contrast on navy
+    color: Colors.primary,                   // electric blue title — high contrast on dark surface (gu-078)
   },
 
   cardBody: {
@@ -305,10 +305,10 @@ const styles = StyleSheet.create({
   bodyTextSpaced: {
     marginTop: Spacing.sm,
     fontWeight: '700',
-    color: Colors.primary,                   // gold accent on navy
+    color: Colors.primary,                   // electric blue accent on dark surface (gu-078)
   },
 
-  // Emergency banner — dark navy with gold border, white text
+  // Emergency banner — black bg, electric blue border, white text (gu-078)
   emergencyBanner: {
     flexDirection: 'row',
     alignItems: 'center',

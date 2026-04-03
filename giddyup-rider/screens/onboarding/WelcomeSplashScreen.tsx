@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
   },
   brandName: {
     fontFamily: 'Rye_400Regular', // gu-052: western slab-serif to match logo style
-    color: Colors.primary,        // Gold — brand accent on dark navy bg ✅
+    color: Colors.primary,        // Electric blue — brand accent on dark bg ✅ (gu-078)
     letterSpacing: 6,
     textAlign: 'center',
     alignSelf: 'stretch',         // gu-072: gives adjustsFontSizeToFit a width boundary

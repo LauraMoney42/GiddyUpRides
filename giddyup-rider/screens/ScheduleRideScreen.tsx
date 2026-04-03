@@ -682,7 +682,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: Spacing.xs,
   },
-  // gu-onboarding-favorites-001: gold accent border distinguishes saved places from generic presets
+  // gu-onboarding-favorites-001: electric blue accent border distinguishes saved places from generic presets (gu-078)
   savedFavTile: {
     borderColor: Colors.primary,
     borderWidth: 1.5,
@@ -752,14 +752,14 @@ const styles = StyleSheet.create({
   },
 
   selectedBadge: {
-    backgroundColor: Colors.surface,  // Navy surface + gold border ✅
+    backgroundColor: Colors.surface,  // Dark surface + electric blue border ✅ (gu-078)
     borderRadius: Radius.sm,
     padding: Spacing.md,
     marginTop: Spacing.sm,
     borderWidth: 1,
     borderColor: Colors.primary,
   },
-  selectedBadgeText: { color: Colors.textPrimary, fontWeight: '600' }, // White on navy = 15:1 ✅
+  selectedBadgeText: { color: Colors.textPrimary, fontWeight: '600' }, // White on dark surface (#1A1A1A) — 16.3:1 ✅ AAA (gu-078)
   selectedBadgeDest: { fontWeight: '800' },
 
   // Day picker grid

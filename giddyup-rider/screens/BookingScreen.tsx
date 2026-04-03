@@ -1290,7 +1290,7 @@ const styles = StyleSheet.create({
     minHeight: TouchTarget.min,
     justifyContent: 'center',
   },
-  // gu-onboarding-favorites-001: saved favorites get a gold accent border
+  // gu-onboarding-favorites-001: saved favorites get an electric blue accent border (gu-078)
   savedFavButton: {
     borderColor: Colors.primary,
     borderWidth: 1.5,
@@ -1470,7 +1470,7 @@ const styles = StyleSheet.create({
   },
   // gu-029: Accessibility notice on confirm step
   accessibilityNote: {
-    backgroundColor: Colors.surface,   // Navy surface + gold border ✅
+    backgroundColor: Colors.surface,   // Dark surface + electric blue border ✅ (gu-078)
     borderRadius: Radius.md,
     padding: Spacing.md,
     borderWidth: 1.5,
@@ -1479,7 +1479,7 @@ const styles = StyleSheet.create({
   },
   accessibilityNoteText: {
     // fontSize set inline via sf() — gu-text-scale
-    color: Colors.textPrimary,          // White on navy = 15:1 ✅
+    color: Colors.textPrimary,          // White on dark surface (#1A1A1A) — 16.3:1 ✅ AAA (gu-078)
     fontWeight: '600',
     lineHeight: 24,
   },

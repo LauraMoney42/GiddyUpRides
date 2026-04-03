@@ -515,13 +515,13 @@ const styles = StyleSheet.create({
   infoCard: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: Colors.surface,   // Navy surface ✅
+    backgroundColor: Colors.surface,   // Dark surface (#1A1A1A) ✅ (gu-078)
     borderRadius: Radius.md,
     padding: Spacing.md,
     marginBottom: Spacing.lg,
     gap: Spacing.sm,
     borderWidth: 1,
-    borderColor: Colors.primary,        // Gold border ✅
+    borderColor: Colors.primary,        // Electric blue border ✅ (gu-078)
   },
   infoEmoji: {
     // fontSize set inline via sf(FontSize.base)
@@ -530,7 +530,7 @@ const styles = StyleSheet.create({
   infoText: {
     flex: 1,
     // fontSize set inline via sf(FontSize.sm)
-    color: Colors.textPrimary,          // White on navy = 15:1 ✅
+    color: Colors.textPrimary,          // White on dark surface (#1A1A1A) — 16.3:1 ✅ AAA (gu-078)
   },
 
   // Section
@@ -776,12 +776,12 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     padding: Spacing.md,
     borderWidth: 1,
-    borderColor: Colors.primary,        // Gold border ✅
+    borderColor: Colors.primary,        // Electric blue border ✅ (gu-078)
     marginBottom: Spacing.lg,
   },
   limitText: {
     // fontSize set inline via sf(FontSize.xs)
-    color: Colors.textPrimary,          // White on navy = 15:1 ✅
+    color: Colors.textPrimary,          // White on dark surface (#1A1A1A) — 16.3:1 ✅ AAA (gu-078)
     textAlign: 'center',
     fontWeight: '600',
   },

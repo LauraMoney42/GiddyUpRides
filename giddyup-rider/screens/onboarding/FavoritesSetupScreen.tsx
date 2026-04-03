@@ -584,7 +584,7 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
   },
 
-  // "From Contacts" button — right of label, gold border, small
+  // "From Contacts" button — right of label, electric blue border, small (gu-078)
   contactsBtn: {
     borderWidth: 1.5,
     borderColor: Colors.primary,
@@ -612,7 +612,7 @@ const styles = StyleSheet.create({
     minHeight: TouchTarget.min,
     fontWeight: '500',
   },
-  // Gold border when field has content — visual confirmation
+  // Electric blue border when field has content — visual confirmation (gu-078)
   inputFilled: {
     borderColor: Colors.primary,
   },
@@ -622,7 +622,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     borderRadius: Radius.md,
     borderWidth: 1.5,
-    borderColor: Colors.primary,  // Gold border — stands out clearly ✅
+    borderColor: Colors.primary,  // Electric blue border — stands out clearly ✅ (gu-078)
     overflow: 'hidden',
     // Slight lift so it reads as a floating suggestion panel
     shadowColor: '#000',

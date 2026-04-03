@@ -363,14 +363,14 @@ const styles = StyleSheet.create({
 
   // WAV notice — gu-mobility-layout-001: increased padding + lineHeight scales inline
   wavBanner: {
-    backgroundColor: Colors.surface,  // Navy — gold border + gold text ✅
+    backgroundColor: Colors.surface,  // Dark surface — electric blue border + electric blue text ✅ (gu-078)
     borderRadius: Radius.md,
     padding: Spacing.lg,
     borderWidth: 1.5,
     borderColor: Colors.primary,
   },
   wavText: {
-    color: Colors.primary,            // Gold on navy = 4.6:1 ✅
+    color: Colors.primary,            // Electric blue on dark surface (#1A1A1A) — 6.8:1 ✅ AA (gu-078)
     fontWeight: '600',
     // lineHeight set inline so it scales with sf()
   },
@@ -453,7 +453,7 @@ const styles = StyleSheet.create({
 
   // Driver preview — gu-mobility-layout-001: increased padding + gap; lineHeight scales inline
   previewCard: {
-    backgroundColor: Colors.surface,  // Navy surface ✅
+    backgroundColor: Colors.surface,  // Dark surface (#1A1A1A) ✅ (gu-078)
     borderRadius: Radius.md,
     padding: Spacing.lg,
     gap: Spacing.sm,

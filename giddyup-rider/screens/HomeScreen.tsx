@@ -623,7 +623,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     gap: Spacing.md,
   },
-  // gu-fav-prefill-001: gold border when a saved address is set
+  // gu-fav-prefill-001: electric blue border when a saved address is set (gu-078)
   favPillSaved: {
     borderColor: Colors.primary,
     borderWidth: 1.5,
