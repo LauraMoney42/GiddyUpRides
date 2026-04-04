@@ -49,3 +49,6 @@
 .idea/
 *.swp
 *.swo
+
+# ── Internal docs (design assets, style guides — not for public repo) ─────────
+Docs/
